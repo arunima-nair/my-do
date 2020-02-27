@@ -1,0 +1,69 @@
+<form [formGroup]="myForm">
+
+
+    <div class="row row-margin">
+
+        <!--div class="col-sm">
+          <app-text-input [parentForm]="myForm" [label]="'Dosearch.bolNo'" [placeHolder]="'BOL Number'"
+            [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div-->
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.refNo'" [placeHolder]="'DO Reference Number'" [fieldName]="'doRefNo'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.reqPartyEmail'" [placeHolder]="'Requesting Party Email'" [fieldName]="'reqPartyEmail'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <!-- <app-text-input [parentForm]="myForm" [label]="'Dosearc    h.reqParty'" [placeHolder]="'Requesting Party'" [fieldName]="'reqParty'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input> -->
+            <app-auto-complete [prefixIcon]="'domain'" [fieldName]="'reqParty'" [label]="'Dosearch.reqParty'" [items]="items" [parentForm]="myForm" [fb]="formBuilder" [url]="'/do/app/api/secure/getImporterAgentDetails'" (outputEvent)="onChangeDoParty($event)"></app-auto-complete>
+        </div>
+    </div>
+    <div class="row row-margin">
+
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.frmDate'" [placeHolder]="'From Date'" [fieldName]="'frmDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" [maxDate]="maxDate" (clickEvent)="onChange()"></app-date-input>
+        </div>
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.toDate'" [placeHolder]="'To Date'" [fieldName]="'toDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" [maxDate]="maxDate" [minDate]="minDate">
+            </app-date-input>
+        </div>
+
+
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.doParty'" [placeHolder]="'DO Party'" [prefixIcon]="'domain'" [fieldName]="'doParty'" [fieldType]="'text'" [validations]="" [fb]="formBuilder">
+            </app-text-input>
+
+        </div>
+    </div>
+    <div class="row row-margin">
+
+        <div class="col-sm">
+            <!--app-text-input [parentForm]="myForm" [label]="'Dosearch.status'" [placeHolder]="'Status'"
+              [fieldName]="'status'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input-->
+            <app-select [fieldName]="'status'" [label]="'Dosearch.status'" [validations]="" [items]="statusItems" [parentForm]="myForm" [fb]="formBuilder">
+            </app-select>
+        </div>
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.bolNo'" [placeHolder]="'Bill of Ladding Number'" [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'Submit'" [icon]="'search'" [buttonName]="'Search'" (clickEvent)="reloadDataTable($event)">
+            </app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-data-table [url]="'/do/app/api/secure/searchDOApprov'" [tableDefn]="tableDfn" (clickEvent)="editDO($event)" [pageSize]="10" [actionable]="true" [edit]="true">
+            </app-data-table>
+        </div>
+
+    </div>
+
+</form>

@@ -1,0 +1,71 @@
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<table border="0" width="660" cellspacing="0" cellpadding="0" align="center">
+<tbody>
+<tr>
+<td><img src="$imageURL" alt="" width="660" height="84" /></td>
+</tr>
+<tr>
+<td>
+<table border="0" width="100%" cellspacing="10" cellpadding="20" bgcolor="#e5e5e5">
+<tbody>
+<tr>
+<td style="font-family: Calibri, Tahoma; font-size: 13px; color: #666; padding: 20px 20px 20px 20px;" valign="top" bgcolor="#FFFFFF">
+<p><span style="color: #cc0000; font-size: small;">$head</span></p>
+<p>Dear Valued User,</p>
+<p>You can proceed and request delivery order for the following uploaded BOL details:</p>
+<table style="height: 192px; width: 573px;" border="1">
+<tbody>
+<tr style="height: 21px;">
+<td style="width: 575px; height: 21px; text-align: justify;" colspan="6">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+<h4 style="text-align: center;"><span style="text-decoration: underline;"><strong> BILL OF LADDING DETAILS</strong></span></h4>
+</td>
+</tr>
+<tr style="height: 41px;">
+<td style="width: 127px; height: 41px;"><strong>Shipping Agent&nbsp;</strong></td>
+<td style="width: 448px; height: 41px;" colspan="5">&nbsp;</td>
+</tr>
+<tr style="height: 41px;">
+<td style="width: 127px; height: 41px;"><strong>Bill of Ladding Number</strong></td>
+<td style="width: 64px; height: 41px;">&nbsp;</td>
+<td style="width: 96px; height: 41px;"><strong>Bill of Ladding Type</strong></td>
+<td style="width: 96px; height: 41px;">&nbsp;</td>
+<td style="width: 96px; height: 41px;">&nbsp;</td>
+<td style="width: 96px; height: 41px;">&nbsp;</td>
+</tr>
+<tr style="height: 21px;">
+<td style="width: 127px; height: 21px;"><strong>Vessel Name</strong></td>
+<td style="width: 64px; height: 21px;">&nbsp;</td>
+<td style="width: 96px; height: 21px;"><strong>ETA</strong></td>
+<td style="width: 96px; height: 21px;">&nbsp;</td>
+<td style="width: 96px; height: 21px;">&nbsp;<strong>ATA</strong></td>
+<td style="width: 96px; height: 21px;">&nbsp;</td>
+</tr>
+<tr style="height: 22px;">
+<td style="width: 575px; height: 22px; text-align: center;" colspan="6"><span style="text-decoration: underline;"><strong><strong>Invoice Details</strong></strong></span>#foreach ($invoice in $invoiceList)#end
+<table style="width: 574px; height: 19px;">
+<tbody>
+<tr>
+<td style="width: 286px;"><strong>Invoice Number</strong></td>
+<td style="width: 287px;"><strong>Invoice Value</strong></td>
+</tr>
+<tr>
+<td style="width: 287px;">$invoice.invoiceNumber</td>
+<td style="width: 287px;">$invoice.invoiceValue</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<br /><br /><form action=$requestDoURL><input type="submit" value="Initiate DO Request" /></form><br /><br />Note: This is an automatically generated email - please do not reply this message.
+<p>Regards,</p>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>

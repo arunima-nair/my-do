@@ -1,0 +1,100 @@
+package ae.dt.deliveryorder.facade;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import ae.dt.deliveryorder.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import ae.dt.common.domain.DTAgentView;
+import ae.dt.common.dto.DataDto;
+import ae.dt.common.dto.PageDto;
+import ae.dt.common.dto.PagedDataDto;
+import ae.dt.common.dto.PaginationDTO;
+import ae.dt.common.dto.PartyDetailsDTO;
+import ae.dt.common.dto.ResponseDto;
+import ae.dt.common.dto.SelectDto;
+import ae.dt.common.dto.UserDTO;
+import ae.dt.common.dto.ViewDTO;
+import ae.dt.deliveryorder.domain.Bol;
+import ae.dt.deliveryorder.domain.BolInvoice;
+import ae.dt.deliveryorder.domain.ChannelType;
+import ae.dt.deliveryorder.domain.RequestBolInvoice;
+
+/**
+ * Created by Kamala.Devi on 1/28/2019.
+ */
+public interface BillOfLaddingFacade {
+
+	public String getBolStatus(String bol_no);
+
+	public BoLDTO getBolDetailObject(String bolNo);
+
+
+	public String requestBLInvoiceDetails(String bol, String agentCode, UserDTO userDTO, String type, String agentType);
+
+	public String processInvoice(String uploadDoc, HttpServletRequest httpServletRequest, String invNo, String fileName)
+			throws IOException;
+
+	public List<PartyDetailsDTO> getAgentDetail(String searchQueryParam, List<String> subIds);
+
+	public String alertnotify(String bolNos, String emails, UserDTO userDTO);
+
+	public BolInvoice getInvoiceDetails(String invId);
+
+	public List<SelectDto> getDocFileSize();
+
+	public List<SelectDto> getShippingAgentSearchAttribute(String agentCode);
+
+	public Date getInvoiceExpiryDate(String invoiceNumber, String bolNumber);
+
+	public List getSAInitiatorPartialPayment(String agentCode, String impType);
+
+	public List<InvoiceTypeDTO> getInvoiceTypes();
+
+	public List<BolInvoice> getInvoicesUploaded(String bolNo);
+
+	public String uploadBolFile(String uploadDoc, String fileName, HttpServletRequest httpServletRequest)
+			throws IOException;
+
+	public void updateBLDetails(BOL bol, List<BolInvoiceDTO> bolInvoiceItems);
+
+	public List<PartyDetailsDTO> getImporterAgentDetailsWithEmail(String searchParam, List<String> subIds);
+
+	public BolInvoice getBolInvoicebyBolNumber(String bol, String invNo);
+
+
+	public DTAgentView getAgentDetailByAgentCodeAndBusinessGroupId(String agentCode, String businessSubId);
+
+	public PartyDetailsDTO getImporterAgentDetailsWithEmailReqParty(String searchParam, List<String> subIds,
+			String userName);
+
+	public List<BoLDTO> getBLdetailsForInternal(String bolNo);
+
+	public Boolean checkInvoice(String invoiceNumber, String bolNumber);
+
+	public List<BoLDTO> getBLdetailsNew(String bolNo, String agentType);
+
+	public PaginationDTO<ViewDTO> getBolDetails(SearchDTO searchDTO, Pageable pageable, UserDTO userDTO,
+			String sortorder, String sortCol);
+
+	public BoLDTO saveBolVersion(String bolNo, UserDTO userDTO);
+
+	public Long getBolVersion(String bolNo);
+
+	public String getSAinvoiceDelimitter(UserDTO userDTO);
+	public Boolean deleteBol(String bolNo, UserDTO userDTO);
+
+	public PaginationDTO<RequestBolInvoiceDTO> searchReqBLInvoicedetails(SearchDTO searchDTO, Pageable pageable, UserDTO userDTO,
+			String sortorder, String sortCol);
+
+	public String getBolNobyInvoiceNo(String id);
+
+	public String getShippingAgentEmailId(String agentCode);
+}

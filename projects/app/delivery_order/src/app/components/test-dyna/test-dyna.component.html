@@ -1,0 +1,63 @@
+
+<form [formGroup]="parentForm" > 
+    <!-- <app-dyna-form [parentForm]="parentForm"
+                [formBuilder]="formBuilder" [formConfig]="formConfig" 
+                (submitEvent)="submittedData($event)">
+    </app-dyna-form> -->
+    <!-- <div class="row">
+            <div class="col-sm-6">
+            <app-text-input [fieldType]="'text'" [parentForm]="parentForm" [label]="'First Name'" [placeHolder]="'first Name'"  [fieldName]="'firstName'" [fb]="formBuilder" [validations]="formConfig['firstName'].config.validation"></app-text-input></div>
+             <div class="col-sm-6">
+            <app-text-input [fieldType]="'email'" [parentForm]="parentForm" [label]="'email'" [placeHolder]="'Email'"  [fieldName]="'email'" [fb]="formBuilder" [validations]="formConfig['email'].config.validation"></app-text-input></div>
+             </div><div class="row"><div class="col-sm-6">
+            <app-date-input  [parentForm]="parentForm" [label]="'Date'"   [placeHolder]="'Date'"  [fieldName]="'date'"  [validations]="formConfig['date'].config.validation"  [fb]="formBuilder"></app-date-input></div>
+             <div class="col-sm-6">
+            <app-select [fieldName]="'selectItem'" [label]="'Select'"  [items]="formConfig['selectItem'].config.items" [parentForm]="parentForm" [fb]="formBuilder"></app-select></div>
+             </div><div class="row"><div class="col-sm-6">
+            <app-auto-complete [fieldName]="'autoSelectItem'" [label]="'Auto Complete'"  [items]="formConfig['autoSelectItem'].config.items" [parentForm]="parentForm" [fb]="formBuilder" [url]=""></app-auto-complete></div>
+             <div class="col-sm-6">
+            <app-select [fieldName]="'multiSelect'" [label]="'Select'"  [items]="formConfig['multiSelect'].config.items" [parentForm]="parentForm" [fb]="formBuilder" [multiple]="'true'"></app-select></div>
+             </div><div class="row"><div class="col-sm-6">
+            <app-textarea [parentForm]="parentForm" [label]="'Address'" [placeHolder]="'Address'" [fieldName]="'address'" [fb]="formBuilder" [validations]="formConfig['address'].config.validation"></app-textarea></div>
+             </div><div class="row"><div class="col-sm-6">
+            <app-radio [parentForm]="parentForm" [label]="'Gender'" [placeHolder]="'Gender'"  [fieldName]="'gender'" [fb]="formBuilder" [validations]="formConfig['gender'].config.validation"  [options]="formConfig['gender'].config.items"></app-radio></div>
+             <div class="col-sm-6">
+            <app-slide [label]="'Yes/No'" [fieldName]="'yn'"  [parentForm]="parentForm" [fb]="formBuilder" ></app-slide></div>
+             </div> -->
+            <div class="row">
+                    <app-button  [buttonType]="'button'"  
+                    [buttonName]="'Reload Table'" (clickEvent)="reloadDataTable($event)"></app-button>
+            </div>
+            <div class="row row-margin" >
+                <div class="col-sm">
+                    <div class="div-table">
+                        <div class="table-head table-row">
+                            <div class="table-column">head1</div>
+                            <div class="table-column">head2</div>
+                            <div class="table-column">head3</div>
+                        </div>
+                            <div class="table-row">
+                                    <div class="table-column">dfdfdf</div>
+                                    <div class="table-column">dfdfdf</div>
+                                    <div class="table-column">dfdfdf</div>
+                                </div>
+                                <div class="table-row">
+                                        <div class="table-column">2</div>
+                                        <div class="table-column">233</div>
+                                        <div class="table-column">2342</div>
+                                    </div>
+
+                    </div>
+            </div>
+            </div>
+             <div class="row row-margin">
+                    <div class="col-sm" >   
+                        <app-data-table 
+                         [url]="'/api/employees/dept'" 
+                          [tableDefn]="tableDfn" [pageSize]="7" 
+                          [actionable]="true" [local]="true">
+                        </app-data-table>
+                    </div>
+
+            </div>
+</form>

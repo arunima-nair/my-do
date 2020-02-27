@@ -1,0 +1,8 @@
+{
+  "/do/*": {
+    "target": "http://localhost:8083/",
+    "secure": false,
+    "pathRewrite": {"^/do" : "/do"},
+    "changeOrigin": true
+  }
+}

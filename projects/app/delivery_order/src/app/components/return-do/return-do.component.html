@@ -1,0 +1,84 @@
+<form [formGroup]="form">
+
+    <app-select [fieldName]="'selectItem'" [label]="'Select Remarks'" [items]="items" [parentForm]="form" [fb]="formBuilder" [multiple]="'false'" #return>
+    </app-select>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-textarea [parentForm]="form" [label]="'Other Comments'" [fieldName]="'otherComments'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-textarea>
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-normal-table [tableDefn]="tableDfn" [delete]="true" [edit]="true" [download]="true" [tableDS]="tableItems" (clickEvent)="tableAction($event)" #returnInvoiceTable></app-normal-table>
+        </div>
+    </div>
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Invoice'" [showPanelIcon]="false" [expanded]="true" *ngIf="showInvPanel">
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-text-input [parentForm]="form" [label]="'amendBL.invoiceNo'" [placeHolder]="'Invoice Number'" [fieldName]="'invoiceNumber'" [fieldType]="'text'" [validations]="" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-date-input [parentForm]="form" [fieldName]="'invoiceValidityDate'" [label]="'amendBL.invoiceValidityDate'" [parentForm]="form" [fb]="formBuilder" [minDate]="minDate">
+                </app-date-input>
+            </div>
+            <div class="col-sm">
+
+                <app-select [fieldName]="'invoiceType'" [label]="'Select Invoice Type'" [items]="invItems" [parentForm]="form" [fb]="formBuilder" [multiple]="'false'" (outputEvent)="checkInvType($event)">
+                </app-select>
+            </div>
+
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+
+                <!--app-text-input [fieldName]="'currency'" [label]="'amendBL.currency'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input-->
+                <app-select [parentForm]="form" [fieldName]="'currency'" [label]="'Select Currency'" [items]="currencyTypes" [fb]="formBuilder" [multiple]="'false'">
+                </app-select>
+            </div>
+            <div class="col-sm">
+
+                <app-text-input [fieldName]="'invoiceValue'" [label]="'amendBL.invoiceValue'" [parentForm]="form" [fb]="formBuilder" [validations]="amountValidation">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-date-input [fieldName]="'invoiceDate'" [label]="'amendBL.invoiceDate'" [parentForm]="form" [fb]="formBuilder">
+                </app-date-input>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <p>
+                    <span style="color:red"> Note: Upload Document only of File Type (ZIP,PDF) and maximum file size 1
+            MB </span>
+                </p>
+
+                <fileupload [parentForm]="form" [label]="'Upload Invoice'" [maxFileSizeMb]="5" [allowedFileTypes]="['zip','pdf']" [placeHolder]="'Upload Invoice'" [fieldName]="'path'" [fb]="formBuilder" [defaultFileId]="uploadedID" (dataEmitter)="fileUpload($event)"
+                    [dndType]="'true'" [defaultLoaded]="isUploaded" [defaultFileName]="'Invoice'"></fileupload>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm button-holder">
+
+                <app-button [buttonType]="'button'" [icon]="'remove'" (clickEvent)="onClear($event)"></app-button>
+                <app-button [buttonType]="'button'" [icon]="'add'" (clickEvent)="addTable($event)"></app-button>
+
+
+            </div>
+        </div>
+
+
+    </collapse-panel>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'button'" [buttonName]="'Submit'" [icon]="'done'" (clickEvent)="onSubmit($event)">
+            </app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+            <app-button [buttonType]="'button'" [buttonName]="'Add Invoice'" [icon]="'add'" (clickEvent)="addInvoice()">
+            </app-button>
+
+        </div>
+    </div>
+</form>

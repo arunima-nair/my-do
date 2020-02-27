@@ -1,0 +1,22 @@
+.material-icons {
+    color: DodgerBlue;
+    border: none;
+    cursor: pointer;
+    font-size: 40px;
+}
+
+.center {
+    text-align: center;
+}
+
+
+/* Darker background on mouse-over */
+
+.material-icons:hover {
+    color: RoyalBlue;
+}
+
+.static-label {
+    color: rgb(0, 0, 0);
+    font-weight: 500;
+}

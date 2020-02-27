@@ -1,0 +1,24 @@
+.page-header-color {
+  background-color: #e0504b;
+  color: #FFF;
+}
+
+.page-header-icon-color {
+  background-color: #c94642;
+}
+
+.btn-class-primary {
+  background-color: #4F4F4F !important;
+}
+
+.btn-class-primary:hover {
+  background-color: #F0902D !important ;
+}
+
+.btn-class-secondary {
+  background-color: #e0504b !important;
+}
+
+.dt-table thead th {
+  background-color: #4b4b4b;
+}

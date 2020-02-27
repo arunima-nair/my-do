@@ -1,0 +1,10 @@
+<app-dialog [title]="'Track Deliver Order'" [ok]="false" [cancel]="false" (clickEvent)="close($event)" [actionButtons]="false">
+    <div class="row row-margin">
+        <div class="col-sm">
+            <!-- <app-button [buttonType]="'button'" [buttonName]="'Print Receipt'" [icon]="'receipt'" (clickEvent)="printReciept()" class="fa-pull-left"></app-button> -->
+            <app-button [buttonType]="'button'" *ngIf="!showBtn" [buttonName]="'Print Receipt'" [icon]="'receipt'" (clickEvent)="printReciept()" class="pull-left"></app-button>
+            <app-button [buttonType]="'button'" *ngIf="showBtn" [buttonName]="'Payment Proof'" [icon]="'payment'" (clickEvent)="paymentProof()" class="pull-right"></app-button>
+            <app-button [buttonType]="'button'" [buttonName]="'View Invoice'" [icon]="'picture_as_pdf'" (clickEvent)="viewInvoice()" class="fa-pull-right"></app-button>
+        </div>
+    </div>​
+</app-dialog>

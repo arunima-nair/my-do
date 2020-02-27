@@ -1,0 +1,71 @@
+{
+    "main": {
+        "title": "Translation demo"
+    },
+    "alert": {
+        "title": "value"
+    },
+    "test": {
+        "firstName": "First Name"
+    },
+    "searchbl": {
+        "title": "Search Bill of Lading",
+        "searchCriteria": "Search Criteria",
+        "shippingAgentName": "Shipping Agent Name",
+        "bolNo": "BOL No",
+        "invoiceNumber": "Invoice Number",
+        "importerName": "Importer Name",
+        "status": "Status"
+    },
+    "monitor": {
+        "title": "Search Monitor File Upload",
+        "searchCriteria": "Search Criteria",
+        "shippingAgentName": "Shipping Agent Name",
+        "referenceNumber": "Reference Number",
+        "bolNo": "BOL No",
+        "fromDate": "From Date",
+        "toDate": "To Date",
+        "invoiceNumber": "Invoice Number",
+        "importerName": "Importer Name",
+        "status": "Status"
+    },
+    "amendBL": {
+        "title": "Amend Bill Of Lading",
+        "shippingAgentName": "Shipping Agent Name",
+        "BOL": "BOL No",
+        "invoiceNumber": "Invoice Number",
+        "importerCode": "Importer Code",
+        "voyageNumber": "Voyage Number",
+        "shippingAgentCode": "Shipping Agent Code",
+        "vesselName": "Vessel Name",
+        "vesselEta": "Vessel ETA",
+        "vesselAta": "Vessel ATA",
+        "Invoice": "Invoice",
+        "invoiceValue": "Invoice Value",
+        "invoiceDate": "Invoice Date",
+        "invoiceValidityDate": "Invoice Validity Date",
+        "invoiceNo": "Invoice Number",
+        "bolType": "BOL Type",
+        "consigneeName": "Consignee Name",
+        "containerCount": "Container Count",
+        "currency": "Currency"
+    },
+    "Dosearch": {
+        "title": "Search Delivery Order",
+        "bolNo": "BOL NO",
+        "refNo": "DO Reference Number",
+        "reqParty": "Requesting Party",
+        "reqPartyEmail": "Requesting Party Email",
+        "frmDate": "From Date",
+        "toDate": "To Date",
+        "doParty": "DO Party",
+        "status": "Status"
+
+    },
+    "uploadbl": {
+        "title": "Upload BOL Details",
+        "bolNo": "BOL NO",
+        "refNo": "DO Reference Number"
+
+    }
+}

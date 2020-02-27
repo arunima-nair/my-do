@@ -1,0 +1,36 @@
+.tile-card {
+    width: 180px;
+    height: 180px;
+    /* box-shadow: 0px 0px 2px 4px rgba(0,0,0,0.2); */
+    box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 
+                 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 
+                 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+    text-align:center;
+    cursor: pointer;
+    background-color: #FFF;
+}
+
+.tile-card:hover {
+    transform: scale(1.02, 1.02);
+    transition: transform 0.2s ease-in;
+}
+
+.tile-card mat-icon {
+    font-size: 60px;
+}
+
+.tile-mat-icon mat-icon {
+    transform: translate(-20px,10px);
+}
+.tile-card span {
+    display:inline-block;
+    margin-top:30px
+  }
+  
+  p.tile-mat-icon {
+    margin-bottom: 5px;
+}
+
+p.tile-txt {
+    font-weight: bold;
+}

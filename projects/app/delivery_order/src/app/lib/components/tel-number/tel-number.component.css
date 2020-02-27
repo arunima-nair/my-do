@@ -1,0 +1,26 @@
+.mat-tel-inputs {
+    display: flex;
+}
+
+.tel-spacer{
+    padding-right: 10px;
+    color: green;
+    font-weight: bold;
+}
+
+.cc-code-class, .ac-code-class,.extn-class {
+    width: 15%;
+}
+
+.num-class {
+    width: 50%;
+}
+
+.hidden-form-field{
+    width:0%;
+    height: 0%;
+}
+.hint-style{
+    font-size: 13px;
+    font-weight: bold;
+}

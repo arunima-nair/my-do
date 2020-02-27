@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title></title>
+</head>
+
+<body>
+<br />
+<table width="660" border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+
+    <td><img src="$imageURL" width="660" height="84" /></td>
+  </tr>
+  <tr>
+    <td><table width="100%" border="0" cellspacing="10" cellpadding="20" bgcolor="#e5e5e5">
+      <tr>
+        <td valign="top" bgcolor="#FFFFFF" style=" font-family:Calibri, Tahoma; font-size:13px; color:#666;padding: 20px 20px 20px 20px "><p><font size="+2" color="#C00" >$head</font></p>
+          <p>Dear Valued User,</p>
+      
+          <p>
+     Request New DO initiated for Bol Number: $bol.
+    
+
+          <br/>
+          </p>
+        
+         <br/><br/>Note: This is an automatically generated email - please do not reply this message.
+
+	<p>Regards,
+	<br>
+	</p>
+      </tr>
+    </table></td>
+  </tr>
+ 
+</table>
+</body>
+</html>

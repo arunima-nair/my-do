@@ -1,0 +1,29 @@
+<app-dialog (clickEvent)="clicked($event)" [ok]="'true'" [cancel]="'true'" [okTxt]="'Request Invoice'" [title]="'Request Invoice'">
+    <div [formGroup]="myform">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <!--app-text-input  [parentForm]="myform" [label]="'BOL Invoice Number'"
+    [placeHolder]="'BOL Invoice Number'"
+    [fieldName]="'invNo'" [fieldType]="'text'" [validations]=""
+    [fb]="formBuilder"></app-text-input-->
+                <app-select [fieldName]="'invNo'" [label]="'BOL Invoice Number'" (outputEvent)="onChangeInv($event)" [items]="invoiceNumber" [parentForm]="myform" [fb]="formBuilder">
+                </app-select>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-auto-complete [fieldName]="'shippingAgentName'" [label]="'ShippingAgent'" [parentForm]="myform" [fb]="formBuilder" [url]="'/do/app/api/secure/getShippingAgentDetails'" #autocompleteagent>
+                </app-auto-complete>
+                <!-- <app-text-input  [parentForm]="myform" [label]="'searchbl.shippingAgentName'"
+    [placeHolder]="'Shipping Agent Name'"
+    [fieldName]="'shippingAgentName'" [fieldType]="'text'" [validations]=""
+    [fb]="formBuilder"></app-text-input>-->
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-text-input [parentForm]="myform" [label]="'Shipping Agent Email'" [placeHolder]="'Shipping Agent Email'" [fieldName]="'reqEmail'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+            </div>
+        </div>
+    </div>
+</app-dialog>

@@ -1,0 +1,108 @@
+<form [formGroup]="form">
+
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Details'" [showPanelIcon]="false" [expanded]="true">
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolNumber" [label]="'B/L Number'"></static-field>
+                <static-field [value]="bol.bolDetails.importerCode" [label]="'Importer Code'"></static-field>
+                <static-field [value]="bol.bolDetails.shippingAgentName" [label]="'Shipping Agent Name'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolType" [label]="'B/L Type'"></static-field>
+                <static-field [value]="bol.bolDetails.voyageNumber" [label]="'Voyage Number'"></static-field>
+                <static-field [value]="bol.bolDetails.shippingAgentCode" [label]="'Shipping Agent Code'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.vesselEta| date: 'dd/MM/yyyy'" [label]="'Vessel Eta'">
+                </static-field>
+                <static-field [value]="bol.bolDetails.vesselAta| date: 'dd/MM/yyyy'" [label]="'Vessel Ata'"
+                    [prefixIcon]="'date_range'"></static-field>
+                <static-field [value]="bol.bolDetails.vesselName" [label]="'Vessel Name'"
+                    [prefixIcon]="'directions_boat'"></static-field>
+            </div>
+            <div class="col-sm">
+
+
+                <static-field [large]="false" [value]="bol.bolDetails.containerCount" [label]="'Container Count'">
+                </static-field>
+                <static-field [large]="false" [value]="bol.bolDetails.consigneeName" [label]="'Consignee Name'">
+                </static-field>
+
+            </div>
+        </div>
+    </collapse-panel>
+    <!-- <collapse-panel [panelCount]="3" [panelText]="'BOL Invoice Details'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[0].invoiceNumber" [label]="'Invoice Number'"></static-field>
+                <static-field [value]="'View Invoice'" *ngIf="bol.bolInvoice[0].path!=null" [hyperLink]="true" (dataEmitter)="viewInvoice()"></static-field>
+            </div>
+
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[0].invoiceValue" [label]="'Invoice Value'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[0].invoiceDate| date: 'dd/MM/yyyy'" [label]="'Invoice Date'" [prefixIcon]="'date_range'"></static-field>
+            </div>
+        </div>
+    </collapse-panel> -->
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Invoice'" [showPanelIcon]="false" [expanded]="true"
+        *ngIf="userType!='IN'">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-normal-table [tableDefn]="tableDfn" [tableDS]="bol.bolInvoice" (clickEvent)="tableAction($event)"
+                    [view]='true' #invoiceTable></app-normal-table>
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Invoice'" [showPanelIcon]="false" [expanded]="true"
+        *ngIf="userType=='IN'">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-normal-table [tableDefn]="tableDfn" [tableDS]="bol.bolInvoice" (clickEvent)="tableAction($event)"
+                    [view]='true' #invoiceTable></app-normal-table>
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelCount]="3" [panelText]="'Invoice Details'" [showPanelIcon]="false" [expanded]="true"
+        [hidden]="!showInvPanel">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="selectedRow.invoiceNumber" [label]="'Invoice Number'"
+                    [prefixIcon]="'directions_boat'"></static-field>
+                <static-field [value]="selectedRow.currency" [label]="'Select Currency'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="selectedRow.invoiceValidityDate" [label]="'Invoice Validity Date'"
+                    [prefixIcon]="'directions_boat'"></static-field>
+                <static-field [value]="selectedRow.invoiceValue" [label]="'Invoice Value'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="selectedRow.invoiceType.invoiceTypeName" [label]="'Select Invoice Type'"
+                    [prefixIcon]="'directions_boat'"></static-field>
+                <static-field [value]="selectedRow.invoiceDate | date: 'dd/MM/yyyy'" [label]="'Invoice Date'"
+                    [prefixIcon]="'date_range'"></static-field>
+            </div>
+            <div class="col-sm">
+                <!-- <static-field [label]="'Uploaded Invoice'"></static-field> -->
+                <div class="static-label">Uploaded Invoice:</div>
+                <!-- <div class='center'><i class="material-icons" (click)='dowloadInvoice(selectedRow)'>cloud_download</i></div> -->
+                <div class="col-sm">
+                    <static-field [value]="'Invoice'" [hyperLink]="true" [hyperLinkId]="selectedRow.invoiceNumber"
+                        (dataEmitter)="dowloadInvoice(selectedRow)">
+                    </static-field>
+                    <!-- <static-field [value]="'Authorization Letter'" *ngIf="authoriseDO.authLetter!=undefined" [hyperLink]="true" [hyperLinkId]="this.authoriseDO.authDocId" (dataEmitter)="viewFile($event)">
+                    </static-field> -->
+                </div>
+            </div>
+        </div>
+    </collapse-panel>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'button'" [buttonName]="'Back'" (clickEvent)="close()" [icon]="'arrow_back'">
+            </app-button>
+        </div>
+    </div>
+</form>

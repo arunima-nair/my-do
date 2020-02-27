@@ -1,0 +1,29 @@
+    <div class="info-box" *ngIf="boxType === 1">
+      <div class="icon bg-red"  [ngStyle]="{'background-color':color}">
+        <i class="material-icons">{{icon}}</i>
+      </div>
+      <div class="content">
+        <div class="text">{{message}}</div>
+        <div class="number">{{value}}</div>
+      </div>
+    </div>
+
+    <div class="info-box bg-red" [ngStyle]="{'background-color':color}" *ngIf="boxType === 2">
+      <div class="icon">
+        <i class="material-icons">{{icon}}</i>
+      </div>
+      <div class="content" >
+        <div class="text">{{message}}</div>
+        <div class="number">{{value}}</div>
+      </div>
+    </div>
+
+    <div class="info-box-4" *ngIf="boxType === 3">
+      <div class="icon">
+        <i class="material-icons col-red" [ngStyle]="{'color':color}">{{icon}}</i>
+      </div>
+      <div class="content">
+        <div class="text">{{message}}</div>
+        <div class="number">{{value}}</div>
+      </div>
+    </div>

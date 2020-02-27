@@ -1,0 +1,32 @@
+<mat-expansion-panel [ngClass]="'expansionPanel'" [expanded]="expanded">
+  <mat-expansion-panel-header [collapsedHeight]="'80px'" [expandedHeight]="'80px'">
+    <mat-panel-title>
+      <div class="panel-header-div" *ngIf="showPanelIcon">
+        <div class="panel-icon">
+          <span class="outer-circle">
+            <span class="inner-circle">
+              <ng-container *ngIf="!panelIcon">
+                {{panelCount}}
+              </ng-container>
+              <ng-container *ngIf="panelIcon">
+                <mat-icon>{{icon}}</mat-icon>
+              </ng-container>
+            </span>
+
+          </span>
+        </div>
+        <div class="panel-text">
+          {{panelText}}
+        </div>
+      </div>
+      <div class="panel-header-text" *ngIf="!showPanelIcon">
+        <span>
+          {{panelText}}
+        </span>
+      </div>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <div class='collapse-panel-content'>
+    <ng-content></ng-content>
+  </div>
+</mat-expansion-panel>

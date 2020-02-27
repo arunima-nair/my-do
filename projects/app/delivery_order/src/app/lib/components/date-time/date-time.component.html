@@ -1,0 +1,22 @@
+<mat-form-field appearance="fill" [formGroup]="parentForm">
+  <mat-label>{{labelTxt}}</mat-label>
+  <input matInput [formControlName]="fieldName" class="hidden-form-field" tabindex=-1 autocomplete="off"
+    (focus)="switchToNext($event)">
+
+  <input matInput [matDatepicker]="picker" [value]="dateTxt" class="date-class" autocomplete="off"
+    (keydown)="dtDown($event)" (focus)="picker.open()" maxlength="10" (dateChange)="dateUpdate($event)"
+    (blur)="dtBlur($event)">
+  <mat-icon matPrefix (click)="picker.open()" style="cursor:pointer; color:#777;">today</mat-icon>
+  <mat-datepicker [panelClass]="'datePicker'" #picker disabled="false"></mat-datepicker>
+  <span class="mat-date-time-input">
+    <input matInput autocomplete="off" [placeholder]="'HH'" name="hh" (keydown)="hhDown($event)" (keyup)="hhUp($event)"
+      class="hh-class" [value]="hh" maxlength="2">
+    <span class="time-spacer">:</span>
+    <input matInput autocomplete="off" name="mm" [placeholder]="'MM'" (keydown)="mmDown($event)" (keyup)="mmUp($event)"
+      class="mm-class" [value]="mm" maxlength="2">
+  </span>
+  <ng-container *ngFor="let validation of validations;" ngProjectAs="mat-error">
+    <mat-error *ngIf="parentForm.get(fieldName).hasError(validation.name)">
+      {{validation.message}}</mat-error>
+  </ng-container>
+</mat-form-field>

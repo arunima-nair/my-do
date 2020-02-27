@@ -1,0 +1,14 @@
+
+
+.tree-leaf-node {
+    height: 50px;
+    cursor: pointer;
+    padding: 0px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom:1px solid rgba(0,0,0,.1);
+}
+
+.tree-leaf-node mat-icon {
+    margin-right: 15px;
+}

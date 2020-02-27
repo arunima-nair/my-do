@@ -1,0 +1,17 @@
+<mat-expansion-panel [ngClass]="'expansionPanel'" [expanded]="expanded">
+    <mat-expansion-panel-header [ngClass]="'tree-expansion-panel-header'" [collapsedHeight]="'50px'"
+        [expandedHeight]="'50px'">
+        <mat-panel-title [ngClass]="'menu-mat-panel'">
+
+            <div class="panel-header-text">
+                <mat-icon>{{panelIcon}}</mat-icon>
+                <span class="nav-menu-panel-span-text">
+                    {{panelText}}
+                </span>
+            </div>
+        </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div class='collapse-panel-content'>
+        <ng-content></ng-content>
+    </div>
+</mat-expansion-panel>

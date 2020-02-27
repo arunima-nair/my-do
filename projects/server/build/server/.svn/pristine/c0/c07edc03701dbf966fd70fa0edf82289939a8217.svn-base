@@ -1,0 +1,228 @@
+package ae.dt.deliveryorder.facade;
+
+import java.time.DateTimeException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.convert.Delimiter;
+import org.springframework.stereotype.Service;
+
+import ae.dt.common.constants.Constants;
+import ae.dt.common.dto.MailDTO;
+import ae.dt.common.dto.SelectDto;
+import ae.dt.deliveryorder.domain.AlertNotification;
+import ae.dt.deliveryorder.domain.FileLog;
+import ae.dt.deliveryorder.domain.ShippingAgent;
+import ae.dt.deliveryorder.dto.BOL;
+import ae.dt.deliveryorder.dto.FileProcessDTO;
+import ae.dt.deliveryorder.dto.InvoiceUploadDTO;
+import ae.dt.deliveryorder.repository.AlertNotificationRepository;
+import ae.dt.deliveryorder.service.BillOfLaddingService;
+import ae.dt.deliveryorder.service.DeliveryOrderService;
+import ae.dt.deliveryorder.service.EmailNotificationService;
+import ae.dt.deliveryorder.service.FileProcessingService;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service("fileProcessingFacade")
+public class FileProcessingFacadeImpl implements FileProcessingFacade {
+
+	@Autowired
+	FileProcessingService fileProcessingService;
+	@Autowired
+	AlertNotificationRepository alertNotificationRepository;
+	@Autowired
+	EmailNotificationService emailNotificationService;
+	@Autowired
+	DeliveryOrderFacade deliveryOrderFacade;
+	@Autowired
+	DeliveryOrderService deliveryOrderService;
+	@Autowired
+	BillOfLaddingService billOfLaddingService;
+
+	@Value("${cc.email}")
+	private String ccEmail;
+
+	@Override
+	public void fileProcessing(List<BOL> bolList) {
+		log.debug("fileProcessing Start !!!!!!");
+		if (!bolList.isEmpty()) {
+			FileLog fileLog = fileProcessingService.saveFileLog(bolList.get(0));
+			for (BOL bol : bolList) {
+				// bolList.forEach(bol -> {
+				if (null == bol.getInvoices()) {
+					String error = null;
+					try {
+						error = fileProcessingService.fileProcessing(bol, null);
+					} catch (DateTimeException e) {
+						error = e.getMessage();
+					} catch (RuntimeException e) {
+						error = e.getMessage();
+					} catch (Exception e) {
+						error = e.getMessage();
+					}
+					fileProcessingService.saveFileLogDetails(bol, null, fileLog, error);
+					// fileProcessingService.sendEmail(bol,"BOL",fileLog);
+				} else {
+					bol.getInvoices().forEach(invoice -> {
+						String error = null;
+						try {
+							error = fileProcessingService.fileProcessing(bol, invoice);
+						} catch (DateTimeException e) {
+							error = e.getMessage();
+						} catch (RuntimeException e) {
+							error = e.getMessage();
+						} catch (Exception e) {
+							error = e.getMessage();
+						}
+						fileProcessingService.saveFileLogDetails(bol, invoice, fileLog, error);
+
+					});
+				}
+				/*
+				 * todo send email tp SA with file refno
+				 */
+
+				// });
+
+			}
+			this.sendEmail(bolList.get(0), "BOL", fileLog);
+		}
+		log.debug("fileProcessing End !!!!!!");
+
+	}
+
+	private void sendEmail(BOL bol, String string, FileLog fileLog) {
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+		String notifiyEmail = null;
+		String[] listOfCCEmail = null;
+		// String notifiyEmail =
+		// deliveryOrderFacade.getAdminEmailByAgentCode(fileLog.getShippingAgentCode(),
+		// subIds);
+		String adminEmailAddress = billOfLaddingService.getShippingAgentEmailId(fileLog.getShippingAgentCode());
+		log.info("fileProcessing sendEmail !!!!!!"+bol.toString()+"  "+bol.getConsigneeName()+" "+bol.getShippingAgentName());
+		if (null != adminEmailAddress && null != fileLog.getReferenceNumber()) {
+			Map<String, String> mailContentMap = new HashMap<String, String>();
+			mailContentMap.put("content", adminEmailAddress);
+			String image = getClass().getResource("/images/email_header.png").toString();
+			mailContentMap.put("imageURL", image);
+			mailContentMap.put("shippingAgentName", bol.getShippingAgentName());
+			mailContentMap.put("refNo", fileLog.getReferenceNumber());
+			String head = "Manifest file uploaded for BOL " + bol.getBolNumber();
+			mailContentMap.put("head", head);
+			mailContentMap.put("refNo", fileLog.getReferenceNumber());
+			listOfCCEmail = ccEmail.split(";");
+
+			head = "Manifest file uploaded for BOL " + bol.getBolNumber();
+			if (bol.getConsigneeName() != null)
+				mailContentMap.put("importerName ", bol.getConsigneeName());
+			else
+				mailContentMap.put("importerName ", "");
+//			String emalSA = deliveryOrderService.getAdminEmailByAgentCode(bol.getShippingAgentCode(), subIds);
+			// String emalSA =
+			// billOfLaddingService.getShippingAgentEmailId(bol.getShippingAgentCode());
+			if (bol.getShippingAgentCode() != null) {
+				ShippingAgent shippingAgent = billOfLaddingService.getShippingAgent(bol.getShippingAgentCode());
+				if (shippingAgent != null)
+					mailContentMap.put("shippingAgentName", shippingAgent.getShippingAgentName());
+				else
+					mailContentMap.put("shippingAgentName", bol.getShippingAgentName());
+
+			} else
+				mailContentMap.put("shippingAgentName", bol.getShippingAgentName());
+
+			emailNotificationService.sendMail(new MailDTO().builder().toAddress(adminEmailAddress).subject(head)
+					.ccAddress(listOfCCEmail).mailContentMap(mailContentMap).build(),
+					Constants.EMAIL_TYPE.UPLOAD_BOL_SA.value);
+
+			List<AlertNotification> alertEmail = alertNotificationRepository.findByBolId(bol.getBolNumber());
+			if (alertEmail != null) {
+				if (alertEmail.size() > 0)
+					notifiyEmail = alertEmail.get(0).getEmailId();
+
+				StringTokenizer emailtokenizer = new StringTokenizer(notifiyEmail, ",");
+				while (emailtokenizer.hasMoreTokens()) {
+					String emailImporter = emailtokenizer.nextToken();
+					Map<String, String> mailContentMapImporter = new HashMap<String, String>();
+					String headImp = "Manifest for BOL Number " + bol.getBolNumber() + " Uploaded";
+					mailContentMapImporter.put("head", headImp);
+					mailContentMapImporter.put("bol", bol.getBolNumber());
+					if (bol.getConsigneeName() != null)
+						mailContentMapImporter.put("importerName ", bol.getConsigneeName());
+					else
+						mailContentMapImporter.put("importerName ", "");
+					if (bol.getShippingAgentName() != null)
+						mailContentMapImporter.put("shippingAgentName", bol.getShippingAgentName());
+					else {
+						if (bol.getShippingAgentCode() != null) {
+							ShippingAgent shippingAgent = billOfLaddingService
+									.getShippingAgent(bol.getShippingAgentCode());
+							if (shippingAgent != null)
+								mailContentMapImporter.put("shippingAgentName", shippingAgent.getShippingAgentName());
+							else
+								mailContentMapImporter.put("shippingAgentName", bol.getShippingAgentName());
+
+						} else
+							mailContentMapImporter.put("shippingAgentName", bol.getShippingAgentName());
+
+					}
+					mailContentMapImporter.put("shippingAgentEmail", adminEmailAddress);
+
+					 image = getClass().getResource("/images/email_header.png").toString();
+					mailContentMapImporter.put("imageURL", image);
+					String[] listOfCCMail = ccEmail.split(";");
+					emailNotificationService.sendMail(
+							new MailDTO().builder().toAddress(emailImporter).subject(head).ccAddress(listOfCCMail)
+									.mailContentMap(mailContentMapImporter).build(),
+							Constants.EMAIL_TYPE.UPLOAD_BOL.value);
+				}
+			}
+		}
+	}
+
+	public String invoicePathUpdate(InvoiceUploadDTO invoiceUploadDTO) {
+		log.debug("fileProcessing Start !!!!!!");
+		return fileProcessingService.invoicePathUpdate(invoiceUploadDTO);
+
+	}
+
+	@Override
+	public void sendErrorMessageToShippingAgent(FileProcessDTO fileProcessDTO) {
+		String[] listOfCCEmail = null;
+		FileLog fileLog = new FileLog();
+
+		String adminEmailId = deliveryOrderService.findDistinctByAgentCode(fileProcessDTO.getAgentCode());
+		List<String> properties = Arrays.asList(fileProcessDTO.getFileName(), fileProcessDTO.getFileLocation(),
+				fileProcessDTO.getAgentCode(), fileProcessDTO.getError());
+		properties.removeAll(Arrays.asList("", null));
+
+		fileLog = fileProcessingService.saveErrorMessageToFileLog(fileProcessDTO);
+
+		if (adminEmailId != null) {
+			Map<String, String> mailContentMap = new HashMap<String, String>();
+			String image = getClass().getResource("/images/email_header.png").toString();
+			String head = "Request Delivery Order with  Bill of Ladding approval failed.";
+			mailContentMap.put("imageURL", image);
+			mailContentMap.put("head", head);
+			mailContentMap.put("status", Constants.PAYMENTLOG_STATUS.FAILED.value);
+			mailContentMap.put("refNo", fileLog.getReferenceNumber());
+			mailContentMap.put("error", fileProcessDTO.getError());
+
+			String subject = "Request Delivery Order with  Bill of Ladding Not Approved due to : "
+					+ fileProcessDTO.getError();
+
+			listOfCCEmail = ccEmail.split(";");
+			emailNotificationService.sendMail(new MailDTO().builder().toAddress(adminEmailId).ccAddress(listOfCCEmail)
+					.subject(subject.toString()).mailContentMap(mailContentMap).build(), "FAILED_FILE_PROCCESS");
+		}
+	}
+
+}

@@ -1,0 +1,21 @@
+.page-header-color {
+  background-color: green;
+  color: #FFF;
+}
+
+.page-header-icon-color {
+  background-color: rgba(3, 187, 3, 0.329);
+}
+
+.btn-class-primary {
+  background-color: yellow !important;
+}
+
+.btn-class-secondary {
+  background-color: pink !important;
+}
+
+
+.dt-table thead th {
+  background-color: #4b4b4b;
+}

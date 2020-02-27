@@ -1,0 +1,21 @@
+<mat-form-field appearance="fill" [ngClass]="getFormElementBackGround()" [formGroup]="parentForm">
+    <mat-label>{{labelTxt}}</mat-label>
+    <mat-icon *ngIf="showIcon" matPrefix>phone</mat-icon>
+    <div class="mat-tel-inputs">
+        <input matInput [formControlName]="fieldName" matTooltip="{{toolTip}}" class="hidden-form-field" tabindex=-1 autocomplete="off" (focus)="switchToNext($event)">
+        <input matInput autocomplete="off" name="ccode" (keydown)="ccInput($event)" (keyup)="ccUp($event)" class="cc-code-class" [value]="countryCode" maxlength="3">
+        <span class="tel-spacer">&ndash;</span>
+        <input matInput autocomplete="off" name="acode" (keydown)="acInput($event)" (keyup)="acUp($event)" class="ac-code-class" [value]="areaCode" maxlength="4">
+        <span class="tel-spacer">&ndash;</span>
+        <input matInput autocomplete="off" name="telNumber" (keydown)="numInput($event)" (keyup)="numInputUp($event)" class="num-class" [value]="telNumber" maxlength="10">
+        <ng-container *ngIf="extn">
+            <span class="tel-spacer">x</span>
+            <input matInput autocomplete="off" name="ext" (keydown)="extInput($event)" (keyup)="extUp($event)" class="extn-class" [value]="extValue" maxlength="4">
+        </ng-container>
+    </div>
+	 <mat-hint [ngClass]="'hint-style'">{{helpTxt}}</mat-hint>
+    <ng-container *ngFor="let validation of validations" ngProjectAs="mat-error">
+        <mat-error *ngIf="parentForm.get(fieldName).hasError(validation.name)">
+            {{validation.message}}</mat-error>
+    </ng-container>
+</mat-form-field>

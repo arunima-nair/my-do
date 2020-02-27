@@ -1,0 +1,93 @@
+
+<div class="container">
+  <!-- <div class="row">
+    <ng-container *ngFor="let fc of keyConfig">
+        {{ifNewRow(fc.row)}}
+   
+      <ng-container *ngIf="fc.config.type =='text'">
+       
+        <div  [class]="getColClass(fc)">
+        <app-text-input [parentForm]="parentForm"
+            [label]="fc.config.label" [placeHolder]="fc.config.placeHolder"
+            [fieldName]="fc.control" [fb]="fb" [validations]="fc.config.validation"></app-text-input>
+          </div>
+        </ng-container>
+
+      <ng-container *ngIf="fc.config.type =='email'">
+      <div [class]="getColClass(fc)">
+          <app-text-input [parentForm]="parentForm"
+              [label]="fc.config.label" [placeHolder]="fc.config.placeHolder"
+              [fieldName]="fc.control" [fb]="fb" [validations]="fc.config.validation"></app-text-input>
+      </div>
+      </ng-container>
+
+      <ng-container *ngIf="fc.config.type =='date'">
+        <div  [class]="getColClass(fc)">
+            <app-date-input  [parentForm]="parentForm" [label]="fc.config.label" 
+                      [placeHolder]="fc.config.placeHolder"
+                      [fieldName]="fc.control"  [validations]="fc.config.validation"
+                      [fb]="fb"></app-date-input>
+        </div>
+        </ng-container>
+
+        <ng-container *ngIf="fc.config.type =='select'">
+            <div [class]="getColClass(fc)">
+                <app-select 
+                [fieldName]="fc.control" [label]="fc.config.label" 
+                [items]="fc.config.items" [parentForm]="parentForm" [fb]="fb">
+              </app-select>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="fc.config.type =='autoSelect'">
+            <div  [class]="getColClass(fc)">
+                <app-auto-complete  
+                [fieldName]="fc.control" [label]="fc.config.label" 
+                [items]="fc.config.items" [parentForm]="parentForm" [fb]="fb" [url]="'/api/lov'">
+              </app-auto-complete>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="fc.config.type =='multiselect'">
+            <div   [class]="getColClass(fc)">
+                <app-select 
+                [fieldName]="fc.control" [label]="fc.config.label" 
+                [items]="fc.config.items" [parentForm]="parentForm" [fb]="fb" [multiple]="'true'">
+              </app-select>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="fc.config.type =='textArea'">
+            <div [class]="getColClass(fc)">
+            <app-textarea [parentForm]="parentForm"
+                      [label]="fc.config.label" [placeHolder]="fc.config.placeHolder"
+                      [fieldName]="fc.control" [fb]="fb" [validations]="fc.config.validation">
+              </app-textarea>
+            </div>
+          </ng-container>
+
+          
+          <ng-container *ngIf="fc.config.type =='radio'">
+            <div [class]="getColClass(fc)"> 
+                <app-radio [parentForm]="parentForm"
+                        [label]="fc.config.label" [placeHolder]="fc.config.placeHolder"
+                        [fieldName]="fc.control" [fb]="fb" [validations]="fc.config.validation"
+                        [options]="fc.config.items">
+              </app-radio>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="fc.config.type =='slider'">
+          <div  [class]="getColClass(fc)">
+              <app-slide [label]="fc.config.label" [fieldName]="fc.control" 
+                 [parentForm]="parentForm" [fb]="fb" ></app-slide>
+          </div>
+          </ng-container>          
+    </ng-container>
+  </div> -->
+    <p>
+        <app-button  [buttonType]="'Submit'"  
+                    [buttonName]="'Submit'" (clickEvent)="onSubmit($event)">
+          </app-button>
+     </p> 
+  </div>
+  

@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by JAX-WS RI (http://jax-ws.java.net). RI's version is JAX-WS RI 2.2.10-b140319.1121 svn-revision#7b34660d6bc70e587e8ec81a17e4d76af68816a6. --><definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:tns0="http://payInq.ws.cepg.dw.pcfc.com/types/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://payInq.ws.cepg.dw.pcfc.com/" xmlns:tns1="http://www.oracle.com/webservices/internal/literal" name="inquirePaymentStatus" targetNamespace="http://payInq.ws.cepg.dw.pcfc.com/">
+  <types>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://www.oracle.com/webservices/internal/literal" xmlns:soap11-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="http://payInq.ws.cepg.dw.pcfc.com/types/" targetNamespace="http://payInq.ws.cepg.dw.pcfc.com/types/" elementFormDefault="qualified">
+      <import namespace="http://www.oracle.com/webservices/internal/literal"/>
+      <complexType name="CePGServiceException">
+        <sequence>
+          <element name="message" type="string" nillable="true"/>
+        </sequence>
+      </complexType>
+      <element name="inquirePaymentStatusElement">
+        <complexType>
+          <sequence>
+            <element name="licenseKey" type="string" nillable="true"/>
+            <element name="soTransactionID" type="string" nillable="true"/>
+            <element name="serviceID" type="string" nillable="true"/>
+            <element name="serviceOwnerID" type="string" nillable="true"/>
+          </sequence>
+        </complexType>
+      </element>
+      <element name="inquirePaymentStatusResponseElement">
+        <complexType>
+          <sequence>
+            <element name="result" type="ns1:map" nillable="true"/>
+          </sequence>
+        </complexType>
+      </element>
+      <element name="CePGServiceExceptionElement" type="tns:CePGServiceException"/>
+    </schema>
+    <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soap11-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="http://www.oracle.com/webservices/internal/literal" targetNamespace="http://www.oracle.com/webservices/internal/literal" elementFormDefault="qualified">
+      <import namespace="http://payInq.ws.cepg.dw.pcfc.com/types/"/>
+      <complexType name="map">
+        <sequence>
+          <element name="mapEntry" type="tns:mapEntry" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+      </complexType>
+      <complexType name="mapEntry">
+        <sequence>
+          <element name="key" type="anyType"/>
+          <element name="value" type="anyType"/>
+        </sequence>
+      </complexType>
+    </schema>
+  </types>
+  <message name="InquirePaymentStatus_inquirePaymentStatus">
+    <part name="parameters" element="tns0:inquirePaymentStatusElement"/>
+  </message>
+  <message name="InquirePaymentStatus_inquirePaymentStatusResponse">
+    <part name="parameters" element="tns0:inquirePaymentStatusResponseElement"/>
+  </message>
+  <message name="CePGServiceException">
+    <part name="CePGServiceExceptionElement" element="tns0:CePGServiceExceptionElement"/>
+  </message>
+  <portType name="inquirePaymentStatus">
+    <operation name="inquirePaymentStatus">
+      <input message="tns:InquirePaymentStatus_inquirePaymentStatus"/>
+      <output message="tns:InquirePaymentStatus_inquirePaymentStatusResponse"/>
+      <fault name="CePGServiceException" message="tns:CePGServiceException"/>
+    </operation>
+  </portType>
+  <binding name="inquirePaymentStatusSoapHttp" type="tns:inquirePaymentStatus">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="inquirePaymentStatus">
+      <soap:operation soapAction="http://payInq.ws.cepg.dw.pcfc.com//inquirePaymentStatus"/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="CePGServiceException">
+        <soap:fault name="CePGServiceException" use="literal" encodingStyle=""/>
+      </fault>
+    </operation>
+  </binding>
+  <service name="inquirePaymentStatus">
+    <port name="inquirePaymentStatusSoapHttpPort" binding="tns:inquirePaymentStatusSoapHttp">
+      <soap:address location="http://cepg.dubaitrade.ae:80/corecepg/inquirePaymentStatusSoapHttpPort"/>
+    </port>
+  </service>
+</definitions>

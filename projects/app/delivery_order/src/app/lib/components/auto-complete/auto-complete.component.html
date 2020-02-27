@@ -1,0 +1,24 @@
+<mat-form-field appearance="fill" [formGroup]="parentForm">
+  <mat-label>{{labelTxt}}</mat-label>
+  <mat-icon *ngIf="showIcon" matPrefix>{{prefixIcon}}</mat-icon>
+  <input type="text" aria-label="Number" matInput (blur)="blur($event)" placeholder="" [formControlName]="fieldName"
+    [matAutocomplete]="auto" #f>
+  <button mat-button *ngIf="f.value && !isLoading" matSuffix mat-icon-button aria-label="Clear"
+    [ngClass]="'clear-button'" (click)="clear(f,$event)" tabindex=-1>
+    <mat-icon data-attr="close" [ngClass]="'label-close-icon'">close</mat-icon>
+  </button>
+  <mat-icon *ngIf="isLoading" matSuffix>
+    <mat-spinner diameter="25"></mat-spinner>
+  </mat-icon>
+  <mat-autocomplete #auto="matAutocomplete" (closed)="onClose($event)" (optionSelected)="optionSelected($event)"
+    [displayWith]="displayFn">
+    <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
+      <span [innerHTML]="option.label | highlight: getTypedText() "></span>
+    </mat-option>
+  </mat-autocomplete>
+  <ng-container *ngFor="let validation of validations;" ngProjectAs="mat-error">
+    <mat-error *ngIf="parentForm.get(fieldName).hasError(validation.name)">
+      {{validation.message}}
+    </mat-error>
+  </ng-container>
+</mat-form-field>

@@ -1,0 +1,224 @@
+::ng-deep .breadcrumb-container{
+    background-color: red;
+}
+
+.app-container{
+    padding:0px;
+}
+
+
+ .form-main-card {
+     margin-top: 15px;
+ }
+ .mat-form-field {
+     width:100%;
+     font-size: 15px
+ }
+
+ .mat-form-field-prefix .mat-icon {
+     margin-right: 15px;
+     font-size: 100%;
+ }
+
+ 
+ .component-holder{
+   padding: 20px;
+   background-color: #FFF;
+ }
+
+ .mat-checkbox, .mat-radio-button {
+     margin:10px;
+ }
+ 
+ .mat-button-holder button {
+     margin-left:10px;
+     margin-right:10px;
+ }
+ table.mat-table {
+     width: 100%;
+ }
+ 
+ .mat-dialog-container {
+     padding:0px !important;
+ }
+ 
+.mat-form-field-outline {
+    background-color: #FFF;
+    border-radius: 0px;
+}
+
+.form-element-background-white .mat-form-field-flex {
+    background-color: #FFF !important;
+}
+
+ .mat-dialog-container .alert{
+     background-color:#DF514C;
+ }
+ 
+ .mat-dialog-container .classic {
+     background-color:#DF514C;
+ }
+ 
+
+ 
+ .button-holder {
+     padding: 1rem;
+     border-top: 1px solid #e9ecef;
+     align-items: flex-end;
+     display: flex;
+     flex-direction: row-reverse;
+ }
+ 
+ .dialog-bottom button,.button-holder button{
+    margin-right:5px;
+ }
+ 
+ .mat-raised-button {
+     padding-top: 8px !important;
+     padding-bottom: 8px !important;
+     min-width: 100px !important;
+     line-height: 0px !important;
+ }
+
+
+
+ 
+ .white-background {
+     color: #fff;
+     border-style: none;
+ }
+ 
+ .close-icon:hover, mat-icon:hover{
+   cursor: pointer;
+ }
+ 
+ 
+ .no-display {
+     display: none;
+ }
+
+ .mat-raised-button[disabled] {
+     background-color : #6077f9 !important;
+     color: #FFF !important;
+ }
+ 
+ 
+ 
+ a.no-active {
+     background-color: gray;
+     cursor: not-allowed !important;
+ }
+ 
+ a.active {
+     cursor: pointer;
+ }
+
+ .upload-span{
+    display: inline-block;
+    background-image: linear-gradient(40deg, #a1dedd, rgb(48, 63, 159)) !important;
+    width: 50px;
+    height: 50px;
+    border-radius: 100px;
+    padding-top: 5px;
+ }
+ .upload-icon{
+     font-size: 40px;
+     color: #FFF;
+ }
+  
+.file-upload-div .mat-form-field{
+    width: 80% !important;
+    margin-left:10px;
+}
+
+.loader-wrapper {
+    position: relative;
+}
+.spinner-div{
+    position: fixed;
+    width:100%;
+    top:0;
+    left: 0;
+    opacity: 1;
+    z-index: 2000;
+}
+.loader-overlay {
+    position: fixed;
+    width:100%;
+    height: 100%;
+    top:5px;
+    height: 100vh;
+    left: 0;
+    opacity: 0.3;
+    z-index: 1000;
+    background-color: #8b909c;
+    /* background-color: red; */
+}
+
+ .mat-card {
+    margin-bottom: 15px !important;
+    background-color: #fff;
+}
+
+
+.main-app-card{
+    padding-left:0px !important;
+    padding-top:0px !important;
+    padding-right:0px !important;
+}
+  
+.mat-form-field-subscript-wrapper div mat-error:first-child{
+    visibility: visible;
+  }
+
+  .mat-form-field-subscript-wrapper div mat-error {
+    visibility: hidden;
+  }
+
+.row-margin {
+    margin-bottom:5px;    
+}
+
+mat-icon[data-attr~=close] {
+    font-size:18px !important;
+    opacity: 0.5 !important;
+}
+
+
+.mat-form-field-appearance-fill .mat-form-field-prefix {
+    top : -0.3em;
+}
+app-textarea .mat-form-field-appearance-fill .mat-form-field-prefix {
+    top : -1em !important;
+}
+
+.mat-calendar-header {
+    background-color :#e0504b !important;
+    color: #FFF;
+  }
+
+
+  .mat-form-field-appearance-legacy .mat-form-field-underline {
+      background-color: transparent !important;
+  }
+
+  button:focus {
+      outline: none;
+  }
+
+.block-footer-margin{
+    height: 50px;
+    width: 100%;
+}
+
+/* Fix for IE for the close button on editable field*/
+.clear-button{
+    display:inline !important;
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    /* IE10+ CSS styles go here */
+    .label-close-icon{
+        display: inline !important;      
+    }
+}

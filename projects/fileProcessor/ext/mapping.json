@@ -1,0 +1,52 @@
+[
+  {
+    "lineCode": "39241",
+    "line": "ONE",
+    "conf": {
+      "secureKey" :"T05FIFNISVBQSU5H",
+      "type": "xlsx",
+      "bolnumber": "1",
+      "bolType": "2",
+      "invoiceNumber": "3",
+      "invoiceValue": "4",
+      "vesselName":"9",
+      "voyageNumber": "11",
+      "invoiceIssueDate": {
+        "pos" : "5",
+        "format": "yyyyMMdd"
+      },
+      "consigneeName": "14",
+      "shippingAgentName": "13",
+      "shippingAgentCode": "14",
+      "vesselETA" : {
+        "pos":"10",
+        "format": "dd-MMM-yyyy",
+        "excelFormat" : "date"
+      },
+      "bolTypeMapper": {
+        "B": "OBL",
+        "W": "EBL"
+      },
+      "pdfFileNamingStructure": {
+        "seperator":"-",
+        "invpos": "0",
+        "bolpos": "1"
+      }
+    }
+  },{
+  "line": "HLAG",
+  "lineCode": "14987",
+  "conf": {
+    "secureKey" :"T05FIFNISVBQSU5H",
+    "bolTypeMapper": {
+      "BM": "OBL",
+      "AEX": "EBL"
+    },
+    "pdfFileNamingStructure": {
+      "seperator":"",
+      "invpos": "0",
+      "bolpos": ""
+    }
+  }
+}
+]

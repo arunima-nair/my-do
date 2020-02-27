@@ -1,0 +1,14 @@
+<app-progress-loader></app-progress-loader>
+  <!-- <app-nav></app-nav> -->
+    <section [@fadeInOut]="o.isActivated ? o.activatedRoute : ''" class="container top-container">
+        <mat-card class="main-app-card">
+                <app-bread-crumb></app-bread-crumb>
+                <page-header></page-header>
+                <notification-bar></notification-bar>
+            <div class="component-holder">
+                  <router-outlet #o="outlet"></router-outlet>
+            </div>
+        </mat-card>    
+    </section>
+
+    

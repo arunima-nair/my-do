@@ -1,0 +1,21 @@
+<form [formGroup]="myForm">
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'From Date'" [placeHolder]="'From Date'" [fieldName]="'fromDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" (clickEvent)="onChange()"></app-date-input>
+        </div>
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'To Date'" [placeHolder]="'To Date'" [fieldName]="'toDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" [minDate]="minDate"></app-date-input>
+        </div>
+
+        <div class="col-sm">
+            <app-select [parentForm]="myForm" [fieldName]="'status'" [label]="'BOL Status'" [items]="doStatus" [fb]="formBuilder" [multiple]="'false'">
+            </app-select>
+        </div>
+    </div>
+    <div class="row row-margin ">
+        <div class="col-sm button-holder ">
+            <app-button [buttonType]=" 'Submit' " [buttonName]=" 'Generate Report' " (clickEvent)="generateReport($event) " [icon]=" 'done' "></app-button>
+            <app-button [buttonName]=" 'Reset' " [icon]=" 'refresh' " (clickEvent)="reset() "></app-button>
+        </div>
+    </div>
+</form>

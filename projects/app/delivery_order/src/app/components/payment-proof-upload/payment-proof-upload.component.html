@@ -1,0 +1,8 @@
+<app-dialog  (clickEvent)="clicked($event)" [ok]="'true'" [cancel]="'true'">
+  <div [formGroup]="form">
+      <fileupload [parentForm]="form" [label]="'Upload Payment Proof'"  [maxFileSizeMb]="0.5"
+      [placeHolder]="'Upload Payment Proof'" [allowedFileTypes]="['pdf','jpeg','png','gif']"
+      [fieldName]="'uploadproof'" [fb]="formBuilder" 
+      (dataEmitter)="Upload($event)" [dndType]="'true'"></fileupload>
+  </div>
+</app-dialog>

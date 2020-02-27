@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.springframework.ws:spring-ws-security:2.4.0.RELEASE">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../../../software/Tech/apache-maven-3.3.9-bin/apache-maven-3.3.9/localRepo/org/springframework/ws/spring-ws-security/2.4.0.RELEASE/spring-ws-security-2.4.0.RELEASE.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../../../../../software/Tech/apache-maven-3.3.9-bin/apache-maven-3.3.9/localRepo/org/springframework/ws/spring-ws-security/2.4.0.RELEASE/spring-ws-security-2.4.0.RELEASE-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../../../../software/Tech/apache-maven-3.3.9-bin/apache-maven-3.3.9/localRepo/org/springframework/ws/spring-ws-security/2.4.0.RELEASE/spring-ws-security-2.4.0.RELEASE-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

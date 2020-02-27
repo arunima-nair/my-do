@@ -1,0 +1,11 @@
+.alertDialog {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: antiquewhite;
+}
+
+.alertDialog div {
+    display: inline-block;
+    width: 50%;
+    text-align: center;
+}

@@ -1,0 +1,15 @@
+<app-dialog (clickEvent)="clicked($event)" [ok]="'true'" [cancel]="'true'" [okTxt]="'Request Bill of Ladding'" [title]="'Request BOL'">
+    <div [formGroup]="myform">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-text-input [parentForm]="myform" [label]="'searchbl.bolNo'" [placeHolder]="'BOL Number'" [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-auto-complete [fieldName]="'shippingAgentName'" [label]="'searchbl.shippingAgentName'" [parentForm]="myform" [fb]="formBuilder" [url]="'/do/app/api/secure/getShippingAgentDetails'">
+                </app-auto-complete>
+            </div>
+        </div>
+    </div>
+</app-dialog>

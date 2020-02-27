@@ -1,0 +1,693 @@
+package ae.dt.deliveryorder.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+
+import ae.dt.deliveryorder.domain.*;
+import ae.dt.deliveryorder.repository.*;
+import org.apache.commons.lang.StringUtils;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import ae.dt.common.constants.Constants;
+import ae.dt.common.dto.UserDTO;
+import ae.dt.common.util.DateUtil;
+import ae.dt.common.util.EncryptionUtil;
+import ae.dt.common.util.Utilities;
+import ae.dt.deliveryorder.dto.DoAuthRequestDTO;
+import ae.dt.deliveryorder.dto.PaymentDTO;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service("authoriseDeliveryOrderService")
+public class AuthoriseDeliveryOrderServiceImpl implements AuthoriseDeliveryOrderService {
+
+	@Value("${DOfilePath}")
+	private String dOfilePath;
+	@Value("${paymentProof}")
+	private String paymentProof;
+
+	@Autowired
+	BolRepository bolRepository;
+	@Autowired
+	BolInvoiceRepository bolInvoiceRepository;
+	@Autowired
+	PaymentLogRepository paymentLogRepository;
+	@Autowired
+	ShippingAgentRepository shippingAgentRepository;
+	@Autowired
+	InitiatorRepository initiatorRepository;
+	@Autowired
+	DoAuthRequestRepository doAuthRequestRepository;
+	@Autowired
+	DoAuthDocRepository doAuthDocRepository;
+	@Autowired
+	SAInitiatorPaymentRepository sAInitiatorPaymentRepository;
+	@Autowired
+	CollectionRepository collectionRepository;
+	@Autowired
+	DocumentRepository documentRepository;
+	@Autowired
+	DeliveryOrderService deliveryOrderService;
+	@Autowired
+	MappingService mappingService;
+	@Autowired
+	PaymentProofRepository paymentProofRepository;
+	@Autowired
+	DoAuthRequestAuditRepository doAuthRequestAuditRepository;
+	@Autowired
+	DTAgentViewRepository dTAgentViewRepository;
+
+
+	@Override
+	@Transactional
+	public DoAuthRequestDTO saveAuthorizeDOrequest(String bolNo, DoAuthRequestDTO doAuthRequestDTO, UserDTO userDTO,
+			HttpServletRequest httpServletRequest) {
+		
+		DoAuthRequest authRequest = new DoAuthRequest();
+		DoAuthRequestDTO authRequestDTORes = new DoAuthRequestDTO();
+		Set<Collection> collections = new HashSet<Collection>();
+		Set<PaymentLog> paymentLogs = new HashSet<PaymentLog>();
+		Set<BolInvoice> bolInvoices = new HashSet<BolInvoice>();
+		Bol bol = new Bol();
+		boolean isPayentOfProof = false;
+		double paidAmount = 0D;
+		Boolean isPartialPayment = false;
+		
+		Long doRefNo = doAuthDocRepository.getNextDoRefNo();
+		bol = bolRepository.findBolByBolNumber(bolNo);
+		
+		if (null != doAuthRequestDTO.getDoAuthRequestIdEncr()) {
+			doAuthRequestDTO.setDoAuthRequestId(
+					Long.valueOf(EncryptionUtil.decrypt(doAuthRequestDTO.getDoAuthRequestIdEncr())));
+			authRequest = doAuthRequestRepository.findById(doAuthRequestDTO.getDoAuthRequestId());
+			// isAmend = true;
+			authRequestDTORes.setIsAmend(true);
+			authRequest.clearAuthDocs();
+			authRequest.setModifiedDate(new Date());
+			authRequest.setModifiedBy(userDTO.getUserName());
+			/*
+			 * authRequest.setCreatedBy(userDTO.getUserName());
+			 * authRequest.setCreatedDate(new Date());
+			 */
+			
+			log.info("======================= START : Audit Details for existing Do Auth Request : " +doAuthRequestDTO.getDoAuthRequestId()+ "=======================");
+			DoAuthRequestAudit doAuthRequestAudit = new DoAuthRequestAudit().builder()
+					.bolContactNumber(doAuthRequestDTO.getBolContactNumber())
+					.bolContactPerson(doAuthRequestDTO.getBolContactPerson())
+					.bolEmail(doAuthRequestDTO.getBolEmail())
+					.bolId(bol.getBolId())
+					.bolPartyName(doAuthRequestDTO.getBolPartyName())
+					.doAuthRequestId(doAuthRequestDTO.getDoAuthRequestId())
+					.doContactNumber(doAuthRequestDTO.getDoContactNumber())
+					.doContactPerson(doAuthRequestDTO.getDoContactPerson())
+					.doEmail(doAuthRequestDTO.getDoEmail())
+					.doPartyName(doAuthRequestDTO.getDoPartyName())
+					.reqContactNumber(doAuthRequestDTO.getReqContactNumber())
+					.reqContactPerson(doAuthRequestDTO.getReqContactPerson())
+					.reqEmail(doAuthRequestDTO.getReqEmail())
+					.reqPartyName(doAuthRequestDTO.getReqPartyName())
+					.createdBy(userDTO.getUserName())
+					.status(doAuthRequestDTO.getStatus()).build();
+			doAuthRequestAuditRepository.save(doAuthRequestAudit);
+			log.info("======================= SAVED : Audit Details for existing Do Auth Request  =======================");
+			
+		} else {
+			String doref = "DOREF" + doRefNo;
+			authRequest.setCreatedBy(userDTO.getUserName());
+			authRequest.setCreatedDate(new Date());
+			authRequest.setDoRefNo(doref);
+		}
+		Long randSeq = getTransaction();
+		System.out.println("Transaction ID : " + randSeq);
+		Double payingAmt = 0D;
+
+		paidAmount = bol.getBolInvoices().stream().filter(inv -> inv.getStatus() != null)
+				.filter(inv -> (inv.getStatus().equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value)))
+				.mapToDouble(inv -> inv.getInvoiceValue()).sum();
+		double totalAmount = bol.getBolInvoices().stream().mapToDouble(inv -> inv.getInvoiceValue()).sum();
+		authRequestDTORes.setTotalAmount(totalAmount);
+		isPartialPayment = isPartialPayment(bol.getBolInvoices(), authRequest.getDoAuthRequestId(),
+				doAuthRequestDTO.getPayingAmt());
+
+		authRequestDTORes.setIsPartialPayment(isPartialPayment);
+
+		doAuthRequestDTO.setPaidAmt(paidAmount);
+
+		if (doAuthRequestDTO != null) {
+			BolDetail bolDetails = bol.getBolDetails().iterator().next();
+			bol.setStatus(Constants.BOL_STATUS.INITIATED.value);
+			bol.setModifiedBy(userDTO.getUserName());
+			bol.setModifiedDate(new Date());
+
+			log.info("======================= Do Reference Number : DOREF" + doRefNo + " =======================");
+
+			authRequest.setStatus(doAuthRequestDTO.getStatus());
+			authRequest.setReqPartyName(doAuthRequestDTO.getReqPartyName());
+			authRequest.setReqContactPerson(doAuthRequestDTO.getReqContactPerson());
+			authRequest.setReqEmail(doAuthRequestDTO.getReqEmail());
+			authRequest.setReqContactNumber(doAuthRequestDTO.getReqContactNumber());
+
+			authRequest.setBolPartyName(doAuthRequestDTO.getBolPartyName());
+			authRequest.setBolEmail(doAuthRequestDTO.getBolEmail());
+			authRequest.setBolContactNumber(doAuthRequestDTO.getBolContactNumber());
+			authRequest.setBolContactPerson(doAuthRequestDTO.getBolContactPerson());
+
+			authRequest.setDoPartyName(doAuthRequestDTO.getDoPartyName());
+			authRequest.setDoEmail(doAuthRequestDTO.getDoEmail());
+			authRequest.setDoContactPerson(doAuthRequestDTO.getDoContactPerson());
+			authRequest.setDoContactNumber(doAuthRequestDTO.getDoContactNumber());
+
+			authRequest.setInitiatorCode(doAuthRequestDTO.getInitiatorCode());
+			authRequest.setInitiatorId(doAuthRequestDTO.getInitiatorId());
+			authRequest.setInitiatorType(doAuthRequestDTO.getInitiatorType());
+			authRequest.setInitiatedBy(userDTO.getUserName());
+			authRequest.setVersion(doAuthRequestDTO.getVersion());
+			authRequest.setIsActive(1);
+
+			authRequestDTORes.setShippingAgentCode(bolDetails.getShippingAgentCode());			
+			authRequestDTORes.setReqContactPerson(doAuthRequestDTO.getReqContactPerson());
+			authRequestDTORes.setReqEmail(doAuthRequestDTO.getReqEmail());
+			authRequestDTORes.setReqContactNumber(doAuthRequestDTO.getReqContactNumber());
+			authRequestDTORes.setReqPartyName(doAuthRequestDTO.getReqPartyName());
+			
+			authRequestDTORes.setBolContactPerson(doAuthRequestDTO.getBolContactPerson());
+			authRequestDTORes.setBolEmail(doAuthRequestDTO.getBolEmail());
+			authRequestDTORes.setBolContactNumber(doAuthRequestDTO.getBolContactNumber());
+			authRequestDTORes.setBolPartyName(doAuthRequestDTO.getBolPartyName());
+			
+			authRequestDTORes.setDoContactPerson(doAuthRequestDTO.getDoContactPerson());
+			authRequestDTORes.setDoEmail(doAuthRequestDTO.getDoEmail());
+			authRequestDTORes.setDoContactNumber(doAuthRequestDTO.getDoContactNumber());
+			authRequestDTORes.setDoPartyName(doAuthRequestDTO.getDoPartyName());
+			
+				authRequest.setBlPartyCode(doAuthRequestDTO.getBlPartyCode());
+				authRequest.setBlPartyType(doAuthRequestDTO.getBlPartyType());
+				authRequest.setDoPartyCode(doAuthRequestDTO.getDoPartyCode());
+				authRequest.setDoPartyType(doAuthRequestDTO.getDoPartyType());
+		
+			List<String> payInvoiceList = doAuthRequestDTO.getPayInvoiceList();
+
+			ShippingAgent sADetails = shippingAgentRepository
+					.findByShippingAgentCodeAndIsActive(bolDetails.getShippingAgentCode(), Constants.ACTIVE_VAL);
+			Initiator initiator = initiatorRepository.findByInitiatorTypeAndIsActive(userDTO.getAgentType(),
+					Constants.ACTIVE_VAL);
+
+			if (initiator != null) {
+				authRequest.setInitiatorId(initiator.getInitiatorId());
+				authRequest.setInitiatorCode(userDTO.getAgentCode());
+				authRequest.setInitiatorType(userDTO.getAgentType());
+			}
+			
+			String payTransactionId = "DREF" + randSeq;
+			for (String invoiceNo : payInvoiceList) {
+				/*
+				 * File Upload path saving
+				 */
+				PaymentLog paymentLog = new PaymentLog();
+				BolInvoice bolInvoice = bolInvoiceRepository.findByInvoiceNumberAndBolBolNumber(invoiceNo,bolNo);
+				payingAmt = payingAmt + bolInvoice.getInvoiceValue();
+				paymentLog.setStatus(Constants.PAYMENTLOG_STATUS.PENDING.value);
+				paymentLog.setBolInvoice(bolInvoice);
+				paymentLog.setDoAuthRequest(authRequest);
+				paymentLog.setAmount(bolInvoice.getInvoiceValue());
+				paymentLog.setShippingAgent(sADetails);
+				paymentLog.setInitiatorId(initiator.getInitiatorId());
+				paymentLog.setPaidBy(userDTO.getUserName());
+//				paymentLog.setCreatedBy(userDTO.getUserName());
+//				paymentLog.setCreatedDate(new Date());
+				paymentLog.setInitiatedBy(userDTO.getUserName());
+				paymentLog.setCreatedBy(userDTO.getUserName());
+				paymentLog.setIsActive(1);
+				authRequestDTORes.setIsOnline(doAuthRequestDTO.getIsOnline());
+				if (doAuthRequestDTO.getIsOnline()) {
+					paymentLog.setStatus(Constants.PAYMENTLOG_STATUS.PENDING.value);
+					bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.PAYMENT_PENDING.value);
+					paymentLog.setTransactionId(payTransactionId);
+					authRequestDTORes.setTransactionId(payTransactionId);
+					bolInvoice.setModifiedDate(new Date());
+					bolInvoice.setModifiedBy(userDTO.getUserName());
+				} else if (doAuthRequestDTO.getIsPayImporter()) {
+					paymentLog.setStatus(Constants.PAYMENTLOG_STATUS.PAYMENT_PENDING_WITH_IMPORTER.value);
+					paymentLog.setTransactionId("");
+					authRequestDTORes.setTransactionId("");
+					bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.PAYMENT_PENDING_WITH_IMPORTER.value);
+					bolInvoice.setModifiedDate(new Date());
+					bolInvoice.setModifiedBy(userDTO.getUserName());
+				} else if (doAuthRequestDTO.getIsCredit() || doAuthRequestDTO.getIsPayProof()) {
+
+					bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value);
+					bolInvoice.setModifiedDate(new Date());
+					bolInvoice.setModifiedBy(userDTO.getUserName());
+					paymentLog.setTransactionId(payTransactionId);
+					authRequestDTORes.setTransactionId(payTransactionId);
+					paymentLog.setStatus(Constants.PAYMENTLOG_STATUS.SUCCESS.value);
+					Collection collection = new Collection();
+					collection.setDoAuthRequest(authRequest);
+					collection.setInvoiceNumber(bolInvoice.getInvoiceNumber());
+					collection.setAmount(String.valueOf(bolInvoice.getInvoiceValue()));
+					collection.setStatus(Constants.PAYMENTLOG_STATUS.SUCCESS.value);
+					collection.setBolInvoice(bolInvoice);
+					collection.setPayStatus(paymentLog.getPayStatus());
+					collection.setCreatedBy(userDTO.getUserName());
+					collection.setCreatedDate(new Date());
+					collection.setIsActive(1);
+					if (doAuthRequestDTO.getIsCredit()) {
+						collection.setCollectionType(Constants.PAYMENT_METHOD.CREDIT.value);
+						Credit credit = new Credit();
+						credit.setCollection(collection);
+						credit.setPaymentAmount(new BigDecimal(bolInvoice.getInvoiceValue()));
+						credit.setReference("TEST");
+						credit.setCreatedBy(userDTO.getUserName());
+						credit.setCreatedDate(new Date());
+						credit.setModifiedBy(userDTO.getUserName());
+						credit.setModifiedDate(new Date());
+						credit.setIsActive(1);
+						collection.setCredits(new HashSet<Credit>(Arrays.asList(credit)));
+					} else if (doAuthRequestDTO.getIsPayProof()) {
+						collection.setCollectionType(Constants.PAYMENT_METHOD.UPLOAD_PAYMENT_PROOF.value);
+						PaymentOfProof paymentOfProof = new PaymentOfProof();
+						paymentOfProof.setPaymentAmount(
+								new BigDecimal(bolInvoice.getInvoiceValue()).setScale(2, RoundingMode.CEILING));
+						paymentOfProof.setCollection(collection);
+						isPayentOfProof = true;
+						paymentOfProof.setCreatedBy(userDTO.getUserName());
+						paymentOfProof.setCreatedDate(new Date());
+						paymentOfProof.setModifiedBy(userDTO.getUserName());
+						paymentOfProof.setModifiedDate(new Date());
+						paymentOfProof.setIsActive(1);
+						paymentOfProof.setRefNumber(doAuthRequestDTO.getRefNumber());
+						collection.setPaymentOfProofs(new HashSet<PaymentOfProof>(Arrays.asList(paymentOfProof)));
+					}
+					collections.add(collection);
+					bol.addInvoices(bolInvoice);
+				}
+				paymentLogs.add(paymentLog);
+			}
+			authRequest.setCollections(collections);
+			authRequest.setPaymentLogs(paymentLogs);
+
+			boolean isDoInitated = false;
+			boolean isNonSelectedInvoiceSuccessStatus = false;
+			Set<BolInvoice> bolInvoiceDTOList = bol.getBolInvoices();
+			for (BolInvoice bolInv : bolInvoiceDTOList) {
+				if (Utilities.isEmpty(bolInv.getStatus())) {
+					bolInv.setStatus("");
+				}
+			}
+
+			Set<BolInvoice> unSelectedInvoiceList = bolInvoiceDTOList.stream()
+					.filter(bolInv -> !payInvoiceList.contains(bolInv.getInvoiceNumber())).collect(Collectors.toSet());
+
+			if (doAuthRequestDTO.getIsPayImporter()) {
+				isDoInitated = true;
+			} else {
+				isDoInitated = unSelectedInvoiceList.stream().filter(entity -> entity.getStatus() != null)
+						.anyMatch(inv -> inv.getStatus()
+								.equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_PENDING_WITH_IMPORTER.value));
+			}
+			isNonSelectedInvoiceSuccessStatus = unSelectedInvoiceList.stream().allMatch(
+					inv -> inv.getStatus().equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value));
+			if (isDoInitated) {
+				authRequest.setStatus(Constants.DO_STATUS.DO_INITIATED.value);
+				if (isNonSelectedInvoiceSuccessStatus) {
+					bol.setStatus(Constants.BOL_STATUS.DO_INITIATED.value);
+				}
+			}
+			log.info("Total Invoice : " + bolInvoiceDTOList.size());
+			log.info("Selected Invoice : " + (bolInvoiceDTOList.size() - unSelectedInvoiceList.size()));
+			
+			if (!doAuthRequestDTO.getIsAmend()) {
+				if (doAuthRequestDTO.getPartialPay().equalsIgnoreCase("N")) {
+					double totalPayingAmount = paidAmount + payingAmt;
+					if (totalAmount > totalPayingAmount) {
+						if (doAuthRequestDTO.getIsPayImporter()) {
+							authRequest.setStatus((Constants.DO_STATUS.DO_INITIATED.value));
+							bol.setStatus(Constants.BOL_STATUS.DO_INITIATED.value);
+						} else {
+							bol.setStatus(Constants.BOL_STATUS.PARTIAL_PAYMENT.value);
+							authRequest.setStatus(Constants.DO_STATUS.PARTIAL_PAYMENT.value);
+						}
+					} else {
+						if (doAuthRequestDTO.getIsPayImporter()) {
+							authRequest.setStatus((Constants.DO_STATUS.DO_INITIATED.value));
+							bol.setStatus(Constants.BOL_STATUS.DO_INITIATED.value);
+						} else if (doAuthRequestDTO.getIsOnline()) {
+							bol.setStatus(Constants.BOL_STATUS.INITIATED.value);
+							authRequest.setStatus(Constants.DO_STATUS.DO_INITIATED.value);
+						} else {
+							bol.setStatus(Constants.BOL_STATUS.INITIATED.value);
+							authRequest.setStatus(Constants.DO_STATUS.PENDING_FOR_APPROVAL.value);
+						}
+					}
+				} else {
+					if (doAuthRequestDTO.getIsPayImporter()) {
+						authRequest.setStatus((Constants.DO_STATUS.DO_INITIATED.value));
+						bol.setStatus(Constants.BOL_STATUS.DO_INITIATED.value);
+					} else {
+						authRequest.setStatus((Constants.DO_STATUS.PENDING_FOR_APPROVAL.value));
+						bol.setStatus(Constants.BOL_STATUS.INITIATED.value);
+					}
+				}
+			}
+
+			if (doAuthRequestDTO.getDeliveryOrder() != null) {
+				DeliveryOrder deliveryOrder = new DeliveryOrder();
+				deliveryOrder.setDoAuthRequest(authRequest);
+				deliveryOrder.setDocumentPath("TEST");
+				deliveryOrder.setCreatedBy(userDTO.getUserName());
+				deliveryOrder.setCreatedDate(new Date());
+				authRequest.setDeliveryOrder(deliveryOrder);
+			}
+			if(authRequest.getIsReturned()==null)
+				authRequest.setIsReturned("N");
+			else if(!authRequest.getIsReturned().equalsIgnoreCase("Y"))
+			    authRequest.setIsReturned("N");
+		}
+		authRequest.setBol(bol);
+		bol.setDoAuthRequests(new HashSet<DoAuthRequest>(Arrays.asList(authRequest)));
+
+		DoAuthRequest savedDoauthRequest = doAuthRequestRepository.save(authRequest);
+		List<DoAuthDoc> doAuthDocs = savePassDocs(doAuthRequestDTO, authRequest, userDTO);
+		doAuthDocRepository.saveAll(doAuthDocs);
+		if (isPayentOfProof) {
+			PaymentOfProof paymentProof = savedDoauthRequest.getCollections().iterator().next().getPaymentOfProofs()
+					.iterator().next();
+			paymentProof.setReference(savePaymentOfProofDocument(doAuthRequestDTO, savedDoauthRequest));
+			paymentProofRepository.save(paymentProof);
+		}
+		authRequestDTORes.setDoRefNo(savedDoauthRequest.getDoRefNo());
+		authRequestDTORes.setDoAuthRequestId(authRequest.getDoAuthRequestId());
+		authRequestDTORes.setPayingAmt(payingAmt);
+		authRequestDTORes.setBolNumber(bol.getBolNumber());
+		authRequestDTORes.setIsAmend(doAuthRequestDTO.getIsAmend());
+		
+		log.info("======================= Saved the Auth Request Details with Do Reference Number : " + doRefNo
+				+ " =======================");
+		return authRequestDTORes;
+	}
+
+	public String savePaymentOfProofDocument(DoAuthRequestDTO doAuthRequestDTO, DoAuthRequest authRequest) {
+		String path = null;
+		if (doAuthRequestDTO.getUploadProof() != null) {
+			String[] parts = doAuthRequestDTO.getUploadProof().split("base64,");
+			if (parts.length > 1) {
+				path = SaveDocumentToPath(parts, Constants.PAYMENT_PROOF, authRequest);
+			} else {
+				path = doAuthRequestDTO.getUploadProof();
+			}
+		} else {
+			path = null;
+		}
+		return path;
+	}
+
+	@Override
+	public Long getTransaction() {
+		Long randSeq = paymentLogRepository.getNextTranxNo();
+		return randSeq;
+	}
+
+	@Transactional
+	public Boolean isPartialPayment(Set<BolInvoice> bolInvoices, Long doAuthRequestId, Double payingAmt) {
+		Double paidAmt = 0D, totalAmt = 0D;
+
+		paidAmt = collectionRepository.findAmountByDoAuthRequestDoAuthRequestId(doAuthRequestId);
+		for (BolInvoice bolInvoice : bolInvoices) {
+			totalAmt = totalAmt + Double.valueOf(bolInvoice.getInvoiceValue());
+		}
+		if (paidAmt == null)
+			paidAmt = 0D;
+		if (totalAmt - (paidAmt + payingAmt) > 0)
+			return true;
+		else
+			return false;
+
+	}
+
+	public List<DoAuthDoc> savePassDocs(DoAuthRequestDTO doAuthRequestDTO, DoAuthRequest doAuthRequest,
+			UserDTO userDTO) {
+		List<DoAuthDoc> doAuthDocList = new ArrayList<DoAuthDoc>();
+		// deleteDoAuthRecords(doAuthRequest.getDoAuthRequestId());
+		if (!Utilities.isEmpty(doAuthRequestDTO.getAuthLetter())
+				&& !doAuthRequestDTO.getAuthLetter().equalsIgnoreCase(Constants.amend)) {
+			DoAuthDoc doAuthDoc = saveNewDocumentProcess(doAuthRequest, doAuthRequestDTO.getAuthLetter(),
+					Constants.DOAUTH_DOCS.AUTHORIZATION_LETTER.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		} else if (!Utilities.isEmpty(doAuthRequestDTO.getEncrAuthLetterPath())) {
+			DoAuthDoc doAuthDoc = saveExistingDocumentProcess(doAuthRequest, doAuthRequestDTO.getEncrAuthLetterPath(),
+					Constants.DOAUTH_DOCS.AUTHORIZATION_LETTER.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		}
+
+		if (!Utilities.isEmpty(doAuthRequestDTO.getEmiratesIdCopy())
+				&& !doAuthRequestDTO.getEmiratesIdCopy().equalsIgnoreCase(Constants.amend)) {
+			DoAuthDoc doAuthDoc = saveNewDocumentProcess(doAuthRequest, doAuthRequestDTO.getEmiratesIdCopy(),
+					Constants.DOAUTH_DOCS.EMIRATES_ID.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		} else if (!Utilities.isEmpty(doAuthRequestDTO.getEncrEmiratesIdCopyPath())) {
+
+			DoAuthDoc doAuthDoc = saveExistingDocumentProcess(doAuthRequest,
+					doAuthRequestDTO.getEncrEmiratesIdCopyPath(), Constants.DOAUTH_DOCS.EMIRATES_ID.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		}
+
+		if (!Utilities.isEmpty(doAuthRequestDTO.getBolLetter())
+				&& !doAuthRequestDTO.getBolLetter().equalsIgnoreCase(Constants.amend)) {
+			DoAuthDoc doAuthDoc = saveNewDocumentProcess(doAuthRequest, doAuthRequestDTO.getBolLetter(),
+					Constants.DOAUTH_DOCS.BL_COPY.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		} else if (!Utilities.isEmpty(doAuthRequestDTO.getEncrBolLetterPath())) {
+			DoAuthDoc doAuthDoc = saveExistingDocumentProcess(doAuthRequest, doAuthRequestDTO.getEncrBolLetterPath(),
+					Constants.DOAUTH_DOCS.BL_COPY.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		}
+
+		if (!Utilities.isEmpty(doAuthRequestDTO.getOthDoc())
+				&& !doAuthRequestDTO.getOthDoc().equalsIgnoreCase(Constants.amend)) {
+			DoAuthDoc doAuthDoc = saveNewDocumentProcess(doAuthRequest, doAuthRequestDTO.getOthDoc(),
+					Constants.DOAUTH_DOCS.OTHER_DOCUMENT.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		} else if (!Utilities.isEmpty(doAuthRequestDTO.getEncrOthDocPath())) {
+			DoAuthDoc doAuthDoc = saveExistingDocumentProcess(doAuthRequest, doAuthRequestDTO.getEncrOthDocPath(),
+					Constants.DOAUTH_DOCS.OTHER_DOCUMENT.value, userDTO);
+			doAuthDocList.add(doAuthDoc);
+		}
+		return doAuthDocList;
+	}
+
+	public DoAuthDoc saveNewDocumentProcess(DoAuthRequest doAuthRequest, String documentEncrContent,
+			String constantNameLetterType, UserDTO userDTO) {
+		String[] parts = documentEncrContent.split("base64,");
+		if (parts.length > 1) {
+			DoAuthDoc doAuthDoc = new DoAuthDoc();
+			Document document = documentRepository.findByDocumentValue(constantNameLetterType);
+			doAuthDoc.setDocumentBean(document);
+			doAuthDoc.setDoAuthRequest(doAuthRequest);
+			String extn = null, path = "null";
+			String documentContent = parts[1];
+			String fileName = document.getDocumentValue();
+			path = SaveDocumentToPath(parts, fileName, doAuthRequest);
+			doAuthDoc.setDocumentPath(path);
+			doAuthDoc.setCreatedDate(new Date());
+			doAuthDoc.setIsActive(1);
+			doAuthDoc.setCreatedBy(userDTO.getUserName());
+			return doAuthDoc;
+		}
+		return null;
+	}
+
+	public String SaveDocumentToPath(String[] parts, String fileName, DoAuthRequest doAuthRequest) {
+		String extn = null, path = "null", fileNameWithExtenstion = null, saveLocation = null;
+		String documentContent = parts[1];
+		if (documentContent != null) {
+			extn = Utilities.getFileExtn(Utilities.decodeBase64(documentContent));
+		}
+		if (extn != null) {
+			if (fileName.equalsIgnoreCase(Constants.PAYMENT_PROOF)) {
+				fileNameWithExtenstion = fileName + "_" + System.currentTimeMillis() + "." + extn;
+				saveLocation = paymentProof;
+			} else {
+				fileNameWithExtenstion = fileName + "_" + System.currentTimeMillis() + "." + extn;
+				saveLocation = dOfilePath;
+			}
+			path = Utilities.saveAndGetDocumentPath(documentContent, fileNameWithExtenstion, saveLocation,
+					doAuthRequest.getDoAuthRequestId());
+		}
+		return path;
+	}
+
+	public DoAuthDoc saveExistingDocumentProcess(DoAuthRequest doAuthRequest, String existingFilePAth,
+			String constantNameLetterType, UserDTO userDTO) {
+		DoAuthDoc doAuthDoc = new DoAuthDoc();
+		Document document = documentRepository.findByDocumentValue(constantNameLetterType);
+		doAuthDoc.setDocumentBean(document);
+		doAuthDoc.setDoAuthRequest(doAuthRequest);
+		String path = existingFilePAth;
+		doAuthDoc.setDocumentPath(path);
+		doAuthDoc.setCreatedDate(new Date());
+		doAuthDoc.setIsActive(1);
+		doAuthDoc.setCreatedBy(userDTO.getUserName());
+		return doAuthDoc;
+	}
+
+	@Override
+	@Transactional
+	public DoAuthRequest updateAfterRosoomPayment(PaymentDTO paymentDTO, UserDTO userDTO) {
+		DoAuthRequest doAuthRequest = null;
+		List<PaymentLog> paymentLogs = paymentLogRepository.findByTransactionId(paymentDTO.getSoTransactionId());
+
+		if (null != paymentLogs && paymentLogs.size() > 0) {
+			doAuthRequest = paymentLogs.get(0).getDoAuthRequest();
+		}
+		String partialPayAllow = "N";
+		SAInitiatorPayment sAInitiatorPayment = sAInitiatorPaymentRepository
+				.findByShippingAgentShippingAgentIdAndInitiatorInitiatorId(
+						paymentLogs.get(0).getShippingAgent().getShippingAgentId(),
+						paymentLogs.get(0).getInitiatorId());
+
+		Bol savedBol = doAuthRequest.getBol();
+		double paidAmount = savedBol.getBolInvoices().stream().filter(entity -> entity.getStatus() != null)
+				.filter(inv -> inv.getStatus().equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value))
+				.mapToDouble(inv -> inv.getInvoiceValue()).sum();
+		List<BolInvoice> savedBolInvSet = bolInvoiceRepository.findByBolBolNumber(savedBol.getBolNumber());
+		if (sAInitiatorPayment != null)
+			partialPayAllow = sAInitiatorPayment.getPaymentAllowed();
+
+		Long receiptSeq = collectionRepository.getNextReceiptNo();
+		String receiptSeqVal = new StringBuffer(Constants.RECEIPT_PREFIX).append(receiptSeq).toString();
+
+		if (StringUtils.equalsIgnoreCase(Constants.PAY_SUCCESS, paymentDTO.getPaymentStatus())) {
+			for (PaymentLog paymentLog : paymentLogs) {
+				paymentLog.setStatus(paymentDTO.getPaymentStatus());
+//
+				if(null !=userDTO) {
+				paymentLog.setCreatedBy(userDTO.getUserName());
+				paymentLog.setCreatedDate(new Date());
+				paymentLog.setModifiedBy(userDTO.getUserName());
+				paymentLog.setModifiedDate(new Date());
+				}else{
+					paymentLog.setModifiedBy("SCHEDULER");
+					paymentLog.setModifiedDate(new Date());
+				}
+				BolInvoice bolInvoice = paymentLog.getBolInvoice();
+				bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value);
+//				bolInvoice.setModifiedBy(userDTO.getUserName());
+//				bolInvoice.setModifiedDate(new Date());
+				paymentLog.setBolInvoice(bolInvoice);
+				paymentLogRepository.save(paymentLog);
+				Collection collection = new Collection();
+				collection.setDoAuthRequest(doAuthRequest);
+				collection.setInvoiceNumber(bolInvoice.getInvoiceNumber());
+				collection.setAmount(String.valueOf(bolInvoice.getInvoiceValue()));
+				collection.setStatus(Constants.PAY_SUCCESS);
+				collection.setCollectionType(Constants.PAYMENT_METHOD.ONLINE_PAYMENT.value);
+				collection.setBolInvoice(bolInvoice);
+				collection.setPayStatus(paymentLog.getPayStatus());
+				collection.setTransactionId(paymentLog.getTransactionId());
+				collection.setReceiptNo(receiptSeqVal);
+				if(null !=userDTO) {
+				collection.setCreatedBy(userDTO.getUserName());
+				collection.setCreatedDate(new Date());
+
+				}
+				else {
+					collection.setCreatedBy(paymentLog.getCreatedBy());
+					collection.setCreatedDate(new Date());
+				}
+				collection.setIsActive(1L);
+				Rosoom rosoom = new Rosoom();
+				rosoom.setFiInstrument(paymentDTO.getFiInstrument());
+				rosoom.setFiTransactionId(paymentDTO.getFiTransactionId());
+				rosoom.setGatewayTransactionId(paymentDTO.getGatewayTransId());
+				rosoom.setPaymentAmount(paymentLog.getBolInvoice().getInvoiceValue());
+				rosoom.setCreatedBy(collection.getCreatedBy());
+				rosoom.setIsActive(1L);
+				rosoom.setCreatedDate(new Date());
+				Date fiDate = DateUtil.parseDate(paymentDTO.getFiDate(), "dd/MM/yyyy");
+				rosoom.setFiDate(fiDate);
+				rosoom.setCollection(collection);
+				collection.setRosooms(new HashSet<Rosoom>(Arrays.asList(rosoom)));
+				doAuthRequest.setCollections(new HashSet<Collection>(Arrays.asList(collection)));
+
+			}
+			if (StringUtils.equalsIgnoreCase(partialPayAllow, Constants.NO)) {
+				double totalAmount = savedBol.getBolInvoices().stream().mapToDouble(inv -> inv.getInvoiceValue()).sum();
+
+				// Boolean isPartialPayment = isPartialPayment(doAuthRequest, paidAmount);
+				double totalPayingAmount = paidAmount + Double.valueOf(paymentDTO.getPaymentAmount());
+
+				if (totalPayingAmount == totalAmount) {
+					doAuthRequest.setStatus((Constants.DO_STATUS.PENDING_FOR_APPROVAL.value));
+					doAuthRequest.getBol().setStatus(Constants.BOL_STATUS.INITIATED.value);
+				} else {
+					Boolean payImpFlag = false;
+					for (BolInvoice bolInvoice : savedBolInvSet) {
+						if (bolInvoice.getStatus() != null)
+							if (bolInvoice.getStatus().equalsIgnoreCase(
+									Constants.BOLINVOICE_STATUS.PAYMENT_PENDING_WITH_IMPORTER.value)) {
+								payImpFlag = true;
+								break;
+							}
+					}
+					if (payImpFlag) {
+						doAuthRequest.setStatus(Constants.DO_STATUS.DO_INITIATED.value);
+					} else {
+						doAuthRequest.setStatus(Constants.DO_STATUS.PARTIAL_PAYMENT.value);
+						doAuthRequest.getBol().setStatus(Constants.BOL_STATUS.PARTIAL_PAYMENT.value);
+					}
+
+				}
+			} else {
+				doAuthRequest.setStatus((Constants.DO_STATUS.PENDING_FOR_APPROVAL.value));
+				doAuthRequest.getBol().setStatus(Constants.BOL_STATUS.INITIATED.value);
+			}
+
+		} else {
+			doAuthRequest.setStatus(Constants.DO_STATUS.DO_INITIATED.value);
+			doAuthRequest.setModifiedBy(paymentDTO.getCreatedBy());
+			doAuthRequest.setModifiedDate(new Date());
+			for (PaymentLog paymentLog : paymentLogs) {
+				paymentLog.setStatus(paymentDTO.getPaymentStatus());
+//				paymentLog.setModifiedBy(paymentLog.getCreatedBy());
+//				paymentLog.setModifiedDate(new Date());
+				if(null !=userDTO) {
+					paymentLog.setCreatedBy(userDTO.getUserName());
+					paymentLog.setCreatedDate(new Date());
+					paymentLog.setModifiedBy(userDTO.getUserName());
+					paymentLog.setModifiedDate(new Date());
+				}else{
+					paymentLog.setModifiedBy("SCHEDULER");
+					paymentLog.setModifiedDate(new Date());
+				}
+				BolInvoice bolInvoice = paymentLog.getBolInvoice();
+				bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.PAYMENT_FAILED.value);
+				bolInvoice.setModifiedBy(paymentDTO.getCreatedBy());
+				bolInvoice.setModifiedDate(new Date());
+				paymentLog.setBolInvoice(bolInvoice);
+				paymentLogRepository.save(paymentLog);
+			}
+		}
+
+		doAuthRequestRepository.save(doAuthRequest);
+		return doAuthRequest;
+	}
+
+	public void deleteDoAuthRecords(Long doAuthRequestId) {
+		doAuthDocRepository.deleteByDoAuthRequestDoAuthRequestId(doAuthRequestId);
+
+	}
+
+}

@@ -1,0 +1,502 @@
+package ae.dt.deliveryorder.facade;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.sql.Array;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.servlet.http.HttpServletRequest;
+
+import ae.dt.deliveryorder.dto.*;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import ae.dt.common.constants.Constants;
+import ae.dt.common.domain.DTAgentView;
+import ae.dt.common.dto.MailDTO;
+import ae.dt.common.dto.PageDto;
+import ae.dt.common.dto.PaginationDTO;
+import ae.dt.common.dto.PartyDetailsDTO;
+import ae.dt.common.dto.SelectDto;
+import ae.dt.common.dto.UserDTO;
+import ae.dt.common.dto.ViewDTO;
+import ae.dt.common.exception.BusinessException;
+import ae.dt.common.util.DateUtil;
+import ae.dt.common.util.EncryptionUtil;
+import ae.dt.common.util.ErrorCodes;
+import ae.dt.common.util.Utilities;
+import ae.dt.deliveryorder.domain.Bol;
+import ae.dt.deliveryorder.domain.BolInvoice;
+import ae.dt.deliveryorder.domain.ChannelType;
+import ae.dt.deliveryorder.domain.RequestBolInvoice;
+import ae.dt.deliveryorder.domain.ShippingAgent;
+import ae.dt.deliveryorder.domain.ShippingAgentAttributes;
+import ae.dt.deliveryorder.mapper.BoLMapper;
+import ae.dt.deliveryorder.mapper.BolInvoiceMapper;
+import ae.dt.deliveryorder.mapper.RequestBolInvoiceMapper;
+import ae.dt.deliveryorder.repository.CollectionRepository;
+import ae.dt.deliveryorder.repository.DTUserViewRepository;
+import ae.dt.deliveryorder.service.BillOfLaddingService;
+import ae.dt.deliveryorder.service.EmailNotificationService;
+import ae.dt.deliveryorder.service.FileProcessingService;
+
+/**
+ * Created by Kamala.Devi on 1/28/2019.
+ */
+
+/**
+ * @author ARUNIMA NAIR
+ *
+ */
+@Service("billOfLaddingFacade")
+public class BillOfLaddingFacadeImpl implements BillOfLaddingFacade {
+	@Autowired
+	BillOfLaddingService bolService;
+	@Autowired
+	FileProcessingService fileProcessingService;
+	@Autowired
+	BoLMapper bolMapper;
+	@Autowired
+	BolInvoiceMapper bolInvMapper;
+	@Autowired
+	RequestBolInvoiceMapper reBolInvoiceMapper;
+	Long bolGroupId = 0L;
+	@Value("${invoicefilepath}")
+	private String invoicefilepath;
+	@Value("${bolfilepath}")
+	private String bolfilepath;
+	@Value("${emiratedId.maxFileSizeMb}")
+	private String emiratedIdMaxFileSizeMb;
+	@Value("${authLetter.maxFileSizeMb}")
+	private String authLetterMaxFileSizeMb;
+	@Value("${blCopy.maxFileSizeMb}")
+	private String blCopyMaxFileSizeMb;
+	@Value("${othDoc.maxFileSizeMb}")
+	private String othDocMaxFileSizeMb;
+	@Value("${payUploadProof.maxFileSizeMb}")
+	private String payUploadProofMaxFileSizeMb;
+	@Value("${uploadDO.maxFileSizeMb}")
+	private String uploadDOMaxFileSizeMb;
+	@Value("#{'${shipping.agent.list}'.split(',')}")
+	private List<String> shippingAgentList;
+
+	@Value("{$cc.email}")
+	private String ccEmail;
+
+	@Autowired
+	EmailNotificationService emailNotificationService;
+	@Autowired
+	CollectionRepository collectionRepository;
+	@Autowired
+	DTUserViewRepository dTUserViewRepository;
+	@Autowired
+	DeliveryOrderFacade deliveryOrderFacade;
+	// Logger logger = LoggerFactory.getLogger(BillOfLaddingFacadeImpl.class);
+
+	@Override
+	public PaginationDTO<ViewDTO> getBolDetails(SearchDTO searchDTO, Pageable pageable, UserDTO userDTO,
+			String sortorder, String sortCol) {
+
+		Page<Bol> pageBol = bolService.getBolDetails(searchDTO, pageable, userDTO, sortorder, sortCol);
+		if (pageBol.getContent().size() > 0) {
+			List<BoLDTO> bolDtoList = bolMapper.bolDomaintoDTO(pageBol);
+			List<ViewDTO> viewDTOList = bolMapper.bolDomaintoViewDTO(pageBol);
+
+			int i = 0;
+			for (ViewDTO viewDTO : viewDTOList) {
+
+				viewDTO.setBolNumberEncr(EncryptionUtil.encrypt(bolDtoList.get(i).getBolNumber()));
+				Set<BoLDetailDTO> bolDet = bolDtoList.get(i).getBolDetails();
+				viewDTO.setShippingAgentName(bolDet.stream().filter(d -> d.getShippingAgentName() != null)
+						.map(d -> d.getShippingAgentName()).findAny().orElse(null));
+
+				viewDTO.setVesselName(bolDet.stream().filter(d -> d.getVesselName() != null).map(d -> d.getVesselName())
+						.findAny().orElse(null));
+				viewDTO.setVoyageNumber(bolDet.stream().filter(d -> d.getVoyageNumber() != null)
+						.map(d -> d.getVoyageNumber()).findAny().orElse(null));
+
+				viewDTO.setShippingAgentCode(bolDet.stream().filter(d -> d.getShippingAgentCode() != null)
+						.map(d -> d.getShippingAgentCode()).findAny().orElse(null));
+				Set<DoAuthRequestDTO> authreq = bolDtoList.get(i).getDoAuthRequests();
+				viewDTO.setDoAuthRequestId(authreq.stream().filter(req -> req.getDoAuthRequestId() != null)
+						.map(req -> req.getDoAuthRequestId()).findAny().orElse(null));
+
+				viewDTO.setDoAuthRequestIdEncr(authreq.stream().filter(req -> req.getDoAuthRequestId() != null)
+						.map(req -> EncryptionUtil.encrypt(String.valueOf(req.getDoAuthRequestId()))).findAny()
+						.orElse(null));
+				i++;
+
+			}
+
+			PageDto pageDTO = new PageDto();
+			pageDTO.setPageNumber(pageable.getPageNumber());
+			pageDTO.setTotalElements(pageBol.getTotalElements());
+			pageDTO.setSize(pageable.getPageSize());
+			pageDTO.setTotalPages(pageBol.getTotalPages());
+
+			return new PaginationDTO<ViewDTO>(viewDTOList, pageable.getPageNumber(), pageDTO.getTotalElements(),
+					pageable.getPageSize());
+		}
+		return new PaginationDTO<ViewDTO>(new ArrayList<ViewDTO>(), null, null, pageable.getPageSize());
+	}
+
+	@Override
+	public String getBolStatus(String bol_no) {
+		return bolService.getBolStatus(bol_no);
+	}
+
+	@Override
+	public BoLDTO getBolDetailObject(String bolNo) {
+		return bolService.getBolDetailObject(bolNo);
+	}
+
+	@Override
+	public String requestBLInvoiceDetails(String id, String agentCode, UserDTO userDTO, String type,String agentType) {
+
+		return bolService.saveRequestBoLInvoice(id, agentCode, userDTO, type,agentType);
+
+	}
+
+	@Override
+	public String processInvoice(String uploadDoc, HttpServletRequest httpServletRequest, String invNo, String fileName)
+			throws IOException {
+		String result = "INVOICE UPLOADED.";
+		if (uploadDoc != null) {
+			String[] parts = uploadDoc.split("base64,");
+
+			if (parts.length > 0) {
+				uploadDoc = parts[1];
+			}
+			byte[] bs = Utilities.decodeBase64(uploadDoc);
+			UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+			String fileExtn = Utilities.getFileExtn(bs);
+			if (fileExtn.equalsIgnoreCase("zip") || fileExtn.equalsIgnoreCase("pdf")) {
+				String invoiceDelimitter = getSAinvoiceDelimitter(userDTO);
+				String pdfInvoicepath = Utilities.saveInvoicePDFtoPath(uploadDoc, fileName, bolfilepath,
+						userDTO.getAgentCode(), fileExtn, invoiceDelimitter, "fromInvoiceUpload");
+				// result = bolService.saveInvoiceDetails(bolInvoice);
+				/*
+				 * if (fileName.contains(invoiceDelimitter)) { String[] fNameparts =
+				 * fileName.split(invoiceDelimitter); if (fNameparts.length == 2) { String bolno
+				 * = fNameparts[0]; BolInvoice bolInvoice = new BolInvoice(); bolInvoice =
+				 * bolService.getBolInvoicebyBolNumber(fNameparts[1].replaceFirst(".pdf",
+				 * ""),bolno); bolInvoice.setPath(pdfInvoicepath);
+				 * bolInvoice.setModifiedBy(userDTO.getUserName());
+				 * bolInvoice.setModifiedDate(new Date() );
+				 * bolService.saveInvoiceDetails(bolInvoice); } }
+				 */
+
+			} else {
+				throw new BusinessException(
+						ErrorCodes.INVALID_INVOICE_FILE_FORMAT + ": Invoice file should be pdf/zip format");
+
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public List<PartyDetailsDTO> getAgentDetail(String searchQueryParam, List<String> subIds) {
+
+		Set<DTAgentView> agentDetailSet = bolService.getAgentDetails(searchQueryParam, subIds);
+		// String emailSA =
+		// deliveryOrderFacade.getAdminEmailByAgentCode(searchQueryParam, subIds);
+		String emailSA = bolService.getShippingAgentEmailId(searchQueryParam);
+		List<PartyDetailsDTO> agentDetailList = new ArrayList();
+		agentDetailSet.stream().forEach((agentDetail) -> {
+			agentDetailList.add(new PartyDetailsDTO(agentDetail.getAgentCode() + '-' + agentDetail.getAgentName(),
+					agentDetail.getAgentCode(), agentDetail.getBusinessSubId(), emailSA, shippingAgentList));
+		});
+		return agentDetailList;
+	}
+
+	@Override
+	public String alertnotify(String bolNos, String emails, UserDTO userDTO) {
+		return bolService.alertnotify(bolNos, emails, userDTO);
+	}
+
+	@Override
+	public BolInvoice getInvoiceDetails(String invId) {
+		return bolService.getInvoiceDetails(invId);
+	}
+
+	@Override
+	public List<SelectDto> getDocFileSize() {
+
+		List<SelectDto> docFileSizeList = new ArrayList();
+		docFileSizeList.add(new SelectDto("emiratedIdMaxFileSizeMb", emiratedIdMaxFileSizeMb));
+		docFileSizeList.add(new SelectDto("blCopyMaxFileSizeMb", blCopyMaxFileSizeMb));
+		docFileSizeList.add(new SelectDto("authLetterMaxFileSizeMb", authLetterMaxFileSizeMb));
+		docFileSizeList.add(new SelectDto("othDocMaxFileSizeMb", othDocMaxFileSizeMb));
+		docFileSizeList.add(new SelectDto("payUploadProofMaxFileSizeMb", payUploadProofMaxFileSizeMb));
+		docFileSizeList.add(new SelectDto("uploadDOMaxFileSizeMb", uploadDOMaxFileSizeMb));
+		return docFileSizeList;
+	}
+
+	@Override
+	public List<SelectDto> getShippingAgentSearchAttribute(String agentCode) {
+		List searchParam = new ArrayList();
+		ShippingAgent shippingAgent = bolService.getShippingAgent(agentCode);
+		if (shippingAgent != null) {
+			List<ShippingAgentAttributes> shippingagentAttribute = bolService
+					.getShippingAgentSearchAttribute(agentCode);
+			if (shippingagentAttribute != null)
+				for (ShippingAgentAttributes saList : shippingagentAttribute) {
+					if (saList.getAttributeName().equalsIgnoreCase("SEARCH_PARAM")) {
+						if (saList.getAttributeValue().equalsIgnoreCase("NO_RULE"))
+							searchParam.add(new SelectDto(Constants.SEARCH_PARAM.NO_RULE.desc,
+									Constants.SEARCH_PARAM.NO_RULE.value));
+						else
+							searchParam.add(new SelectDto(saList.getAttributeValue(), saList.getAttributeParam()));
+					}
+				}
+		} else {
+			searchParam.add(new SelectDto(Constants.SEARCH_PARAM.NO_SHIPPING_AGENT.desc,
+					Constants.SEARCH_PARAM.NO_SHIPPING_AGENT.value));
+
+		}
+		return searchParam;
+	}
+
+	@Override
+	public Date getInvoiceExpiryDate(String invoiceNumber, String bolNumber) {
+		return bolService.getInvoiceExpiryDate(invoiceNumber, bolNumber);
+	}
+
+	@Override
+	public List getSAInitiatorPartialPayment(String agentCode, String impType) {
+		return bolService.getSAInitiatorPartialPayment(agentCode, impType);
+	}
+
+	@Override
+	public List<InvoiceTypeDTO> getInvoiceTypes() {
+		return bolService.getInvoiceTypes();
+	}
+
+	@Override
+	public List<BolInvoice> getInvoicesUploaded(String bolNo) {
+		return bolService.getInvoicesUploaded(bolNo);
+	}
+
+	@Override
+	public String uploadBolFile(String uploadDoc, String fileName, HttpServletRequest httpServletRequest)
+			throws IOException {
+		return bolService.uploadBolFile(uploadDoc, fileName, httpServletRequest);
+	}
+
+	@Override
+	public void updateBLDetails(BOL bol, List<BolInvoiceDTO> bolInvoiceItems) {
+		fileProcessingService.saveBLDetails(bol, bolInvoiceItems);
+	}
+
+	@Override
+	public List<PartyDetailsDTO> getImporterAgentDetailsWithEmail(String searchParam, List<String> subIds) {
+		Set<DTAgentView> agentDetailSet = bolService.getAgentDetails(searchParam, subIds);
+
+		List<PartyDetailsDTO> agentDetailList = new ArrayList();
+		agentDetailSet.stream().forEach((agentDetail) -> {
+			// String emailSA =
+			// deliveryOrderFacade.getAdminEmailByAgentCode(agentDetail.getAgentCode(),
+			// subIds);
+			String emailSA = bolService.getShippingAgentEmailId(agentDetail.getAgentCode());
+			agentDetailList.add(new PartyDetailsDTO(agentDetail.getAgentCode(),
+					agentDetail.getAgentCode() + '-' + agentDetail.getAgentName(), agentDetail.getBusinessGroupId(),
+					emailSA, null));
+		});
+		return agentDetailList;
+	}
+
+	@Override
+	public PartyDetailsDTO getImporterAgentDetailsWithEmailReqParty(String searchParam, List<String> subIds,
+			String userName) {
+
+		DTAgentView agentDetail = bolService.getRequestingAgentDetail(searchParam, subIds);
+		PartyDetailsDTO agentDetailList = new PartyDetailsDTO();
+		String email = deliveryOrderFacade.getAdminEmailByAgentCode(agentDetail.getAgentCode(), subIds);
+		// String emailSA =
+		// bolService.getShippingAgentEmailId(agentDetail.getAgentCode());
+		agentDetailList = new PartyDetailsDTO(agentDetail.getAgentCode(),
+				agentDetail.getAgentCode() + '-' + agentDetail.getAgentName(), agentDetail.getBusinessSubId(), email,
+				null);
+
+		return agentDetailList;
+	}
+
+	@Override
+	public BolInvoice getBolInvoicebyBolNumber(String inv, String bol) {
+		return bolService.getBolInvoicebyBolNumber(inv, bol);
+
+	}
+
+	@Override
+	public DTAgentView getAgentDetailByAgentCodeAndBusinessGroupId(String agentCode, String businessSubId) {
+
+		return bolService.getAgentDetailByAgentCodeAndBusinessGroupId(agentCode, businessSubId);
+	}
+
+	@Override
+	public List<BoLDTO> getBLdetailsForInternal(String bolNo) {
+		List<BoLDTO> bolList = bolService.getBLdetails(bolNo);
+		List<BoLDTO> bolUpdatingList = new ArrayList();
+		if (bolList != null && bolList.size() > 0) {
+			BoLDTO bolDTO = bolList.stream().findAny().orElse(null);
+			List<Bol> listBol = new ArrayList();
+			Set<BolInvoiceDTO> bolInv = new HashSet();
+			if (bolDTO.getDoAuthRequests().size() != 0) {
+				for (DoAuthRequestDTO doAuthRequestDto : bolDTO.getDoAuthRequests()) {
+					for (BolInvoiceDTO bolInvoiceDto : bolDTO.getBolInvoices()) {
+						if (bolInvoiceDto.getStatus() == null)
+							bolInvoiceDto.setStatus("PAYMENT_NOT_INITIATED");
+						// if(!bolInvoiceDto.getStatus().equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_PENDING_WITH_IMPORTER.value))
+						// {
+						bolInvoiceDto.setPaidStatus("NOT PAID");
+						bolInvoiceDto.setEncrInvoiceNumber(EncryptionUtil.encrypt(bolInvoiceDto.getInvoiceNumber()));
+						for (CollectionDTO collectionDto : doAuthRequestDto.getCollections()) {
+							if (bolInvoiceDto.getInvoiceNumber().equalsIgnoreCase(collectionDto.getInvoiceNumber()))
+								bolInvoiceDto.setPaidStatus("PAID");
+
+						}
+
+						bolInv.add(bolInvoiceDto);
+						// }
+					}
+					bolDTO.setBolInvoices(bolInv);
+				}
+			} else if (bolDTO.getBolInvoices().size() != 0) {
+				for (BolInvoiceDTO bolInvoiceDto : bolDTO.getBolInvoices()) {
+					bolInvoiceDto.setEncrInvoiceNumber(EncryptionUtil.encrypt(bolInvoiceDto.getInvoiceNumber()));
+					bolInv.add(bolInvoiceDto);
+					System.out.println(bolInvoiceDto.getInvoiceType().getInvoiceTypeId());
+				}
+				bolDTO.setBolInvoices(bolInv);
+			}
+			// bolList.add(bolDTO);
+		}
+		return bolList;
+	}
+
+	@Override
+	public Boolean checkInvoice(String invoiceNumber, String bolNumber) {
+		return bolService.checkInvoice(invoiceNumber, bolNumber);
+	}
+
+	@Override
+	public List<BoLDTO> getBLdetailsNew(String bolNo, String agentType) {
+		List<BoLDTO> bolList = bolService.getBLdetailsNew(bolNo, agentType);
+		if (bolList != null && bolList.size() > 0) {
+			BoLDTO bolDTO = bolList.stream().findAny().orElse(null);
+			Set<BolInvoiceDTO> bolInv = new HashSet();
+			if (bolDTO.getBolInvoices().size() != 0) {
+				for (BolInvoiceDTO bolInvoiceDto : bolDTO.getBolInvoices()) {
+					if (bolInvoiceDto.getStatus() == null) {
+						bolInvoiceDto.setStatus("PAYMENT_NOT_INITIATED");
+					}
+					bolInvoiceDto.setPaidStatus("NOT PAID");
+					bolInvoiceDto.setEncrInvoiceNumber(EncryptionUtil.encrypt(bolInvoiceDto.getInvoiceNumber()));
+					if (bolInvoiceDto.getStatus().equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value))
+						bolInvoiceDto.setPaidStatus("PAID");
+					bolInvoiceDto.setEncrInvoiceNumber(EncryptionUtil.encrypt(bolInvoiceDto.getInvoiceNumber()));
+					if (bolInvoiceDto.getStatus() != null) {
+						if (bolInvoiceDto.getStatus()
+								.equalsIgnoreCase(Constants.BOLINVOICE_STATUS.PAYMENT_SUCCESS.value))
+							;
+						bolInvoiceDto.setCreatedBy(bolInvoiceDto.getModifiedBy());
+					} else {
+						bolInvoiceDto.setCreatedBy("");
+					}
+					if (bolDTO.getStatus().equalsIgnoreCase(Constants.DO_STATUS.REJECTED.value)) {
+						bolInvoiceDto.setStatus("");
+						bolInvoiceDto.setPaidStatus("");
+						bolInvoiceDto.setModifiedBy("");
+						bolInvoiceDto.setCreatedBy("");
+					}
+					bolInv.add(bolInvoiceDto);
+				}
+			}
+			bolDTO.setBolInvoices(bolInv);
+		}
+		return bolList;
+	}
+
+	@Override
+	public Boolean deleteBol(String bolNo, UserDTO userDTO) {
+		return bolService.deleteBol(bolNo, userDTO);
+	}
+
+	@Override
+	public BoLDTO saveBolVersion(String bolNo, UserDTO userDTO) {
+		return bolService.saveBolVersion(bolNo, userDTO);
+	}
+
+	@Override
+	public Long getBolVersion(String bolNo) {
+
+		return bolService.getBolVersion(bolNo);
+
+	}
+
+	@Override
+	public String getSAinvoiceDelimitter(UserDTO userDTO) {
+		return bolService.getSAinvoiceDelimitter(userDTO);
+	}
+
+	@Override
+	public PaginationDTO<RequestBolInvoiceDTO> searchReqBLInvoicedetails(SearchDTO searchDTO, Pageable pageable,
+			UserDTO userDTO, String sortorder, String sortCol) {
+		Page<RequestBolInvoice> pageBol = bolService.searchReqBLInvoicedetails(searchDTO, pageable, userDTO, sortorder,
+				sortCol);
+		if (pageBol.getContent().size() > 0) {
+			List<RequestBolInvoiceDTO> requestBolInvoiceListDTO = reBolInvoiceMapper
+					.requestBolInvoicedomaintoDTO(pageBol.getContent());
+			for (RequestBolInvoiceDTO reqBolInvoiceList : requestBolInvoiceListDTO) {
+				reqBolInvoiceList
+						.setCreatedDateStr(DateUtil.formatDate(reqBolInvoiceList.getCreatedDate(), "dd/MM/yyyy HH:mm"));
+
+			}
+			PageDto pageDTO = new PageDto();
+			pageDTO.setPageNumber(pageable.getPageNumber());
+			pageDTO.setTotalElements(pageBol.getTotalElements());
+			pageDTO.setSize(pageable.getPageSize());
+			pageDTO.setTotalPages(pageBol.getTotalPages());
+
+			return new PaginationDTO<RequestBolInvoiceDTO>(requestBolInvoiceListDTO, pageable.getPageNumber(),
+					pageDTO.getTotalElements(), pageable.getPageSize());
+		}
+		return new PaginationDTO<RequestBolInvoiceDTO>(new ArrayList<RequestBolInvoiceDTO>(), null, null,
+				pageable.getPageSize());
+
+	}
+
+	@Override
+	public String getBolNobyInvoiceNo(String invno) {
+		BolInvoice bolInvoice = getInvoiceDetails(invno);
+		if (bolInvoice != null)
+			return bolInvoice.getBol().getBolNumber();
+		return null;
+	}
+
+	@Override
+	public String getShippingAgentEmailId(String agentCode) {
+		return bolService.getShippingAgentEmailId(agentCode);
+	}
+
+}

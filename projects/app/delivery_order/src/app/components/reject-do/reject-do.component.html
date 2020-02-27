@@ -1,0 +1,22 @@
+<app-dialog  (clickEvent)="clicked($event)" [ok]="'true'" [cancel]="'true'">
+  <div [formGroup]="form">
+  <app-select 
+    [fieldName]="'selectItem'"
+    [label]="'Select Remarks'" 
+    [items]="items"
+    [parentForm]="form"
+    [fb]="formBuilder" 
+    [multiple]="'false'"
+    #reject
+  >
+  </app-select>
+  <div class="row row-margin">
+    <div class="col-sm">
+     <app-textarea  [parentForm]="form" [label]="'Other Comments'"
+          [fieldName]="'otherComments'" [fieldType]="'text'" [validations]=""
+     [fb]="formBuilder" ></app-textarea>
+     </div>
+     </div>
+</div>
+</app-dialog>
+

@@ -1,0 +1,39 @@
+
+  <form [formGroup]="myForm">
+
+    
+      <div class="row row-margin">
+
+        <div class="col-sm">
+          <app-text-input [parentForm]="myForm" [label]="'Dosearch.bolNo'" [placeHolder]="'BOL Number'"
+            [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.refNo'" [placeHolder]="'DO Reference Number'"
+              [fieldName]="'doRefNo'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+  
+          </div>
+        </div>
+    
+  
+
+       
+      <div class="row row-margin">
+        <div class="col-sm button-holder">
+          <app-button [buttonType]="'Submit'" [buttonName]="'Search'" (clickEvent)="reloadDataTable($event)"[icon]="'search'">
+          </app-button>
+          <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+
+        </div>
+      </div>
+      <div class="row row-margin">
+        <div class="col-sm">
+          <app-data-table [url]="'/do/app/api/secure/searchDOPending'" [tableDefn]="tableDfn" (clickEvent)="editDO($event)"
+            [pageSize]="10" [actionable]="true"  [edit]="true">
+          </app-data-table>
+        </div>
+
+      </div>
+
+  </form>

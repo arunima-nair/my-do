@@ -1,0 +1,12 @@
+<app-dialog (clickEvent)="clickFn($event)" [ok]="'true'" [cancel]="'true'" [okTxt]="'Request New DO'" [title]="'Request New DO'">
+    <div [formGroup]="myform">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [large]="false" [value]="event.shippingAgentName" [label]="'ShippingAgent'"></static-field>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myform" [label]="'Shipping Agent Email'" [placeHolder]="'Shipping Agent Email'" [fieldName]="'reqEmail'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+            </div>
+        </div>
+    </div>
+</app-dialog>

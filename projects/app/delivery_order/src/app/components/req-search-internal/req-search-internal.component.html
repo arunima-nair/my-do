@@ -1,0 +1,57 @@
+<form [formGroup]="myForm">
+
+
+    <div class="row row-margin">
+        <div class="col-sm">
+
+            <app-auto-complete [fieldName]="'shippingAgentName'" [label]="'searchbl.shippingAgentName'" [items]="items" [parentForm]="myForm" [fb]="formBuilder" [url]="'/do/app/api/secure/getShippingAgentDetails'" #autocompletesa>
+            </app-auto-complete>
+
+        </div>
+        <div class="col-sm">
+            <app-auto-complete [fieldName]="'importerName'" [label]="'searchbl.importerName'" [items]="items" [parentForm]="myForm" [fb]="formBuilder" [url]="'/do/app/api/secure/getImporterAgentDetails'" #autocompleteimp>
+            </app-auto-complete>
+        </div>
+
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'searchbl.bolNo'" [placeHolder]="'BOL Number'" [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'searchbl.invoiceNumber'" [placeHolder]="'Invoice Number '" [fieldName]="'invoiceNumber'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+        </div>
+
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.frmDate'" [placeHolder]="'From Date'" [fieldName]="'frmDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder">
+            </app-date-input>
+        </div>
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.toDate'" [placeHolder]="'To Date'" [fieldName]="'toDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-date-input>
+        </div>
+        <div class="col-sm">
+            <app-select [parentForm]="myForm" [fieldName]="'reqType'" [label]="'Select Request Type'" [items]="requestTypeItems" [fieldType]="'text'" [fb]="formBuilder">
+            </app-select>
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'Submit'" [buttonName]="'Search'" [icon]="'search'" (clickEvent)="reloadDataTable($event)"></app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'"></app-button>
+            <app-button [buttonType]="'button'" [buttonName]="'Back'" [icon]="'arrow_back'"></app-button>
+        </div>
+    </div>
+
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-data-table [url]="'/do/app/api/secure/searchReqBLInvoicedetails'" [tableDefn]="tableDfn" [edit]="false" [view]="false" [pageSize]="10" [actionable]="true">
+            </app-data-table>
+        </div>
+
+    </div>
+
+
+</form>

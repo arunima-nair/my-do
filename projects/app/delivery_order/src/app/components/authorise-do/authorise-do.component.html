@@ -1,0 +1,368 @@
+<form [formGroup]="myForm">
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Details'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolNumber" [label]="'B/L Number'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolType" [label]="'B/L Type'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.vesselName" [label]="'Vessel Name'" [prefixIcon]="'directions_boat'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="bol.bolDetails.consigneeName" [label]="'Consignee Name'">
+                </static-field>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.vesselEta| date: 'dd/MM/yyyy'" [label]="'Vessel ETA'" [prefixIcon]="'drive_eta'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.vesselAta| date: 'dd/MM/yyyy'" [label]="'Vessel ATA'" [prefixIcon]="'drive_eta'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.voyageNumber" [label]="'Voyager Number'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="bol.bolDetails.containerCount" [label]="'Container Count'">
+                </static-field>
+            </div>
+
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.shippingAgentCode" [label]="'Shipping Agent Code'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.shippingAgentName" [label]="'Shipping Agent Name'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.importerCode" [label]="'Importer Code'"></static-field>
+            </div>
+            <div class="col-sm">
+
+            </div>
+        </div>
+
+    </collapse-panel>
+
+    <collapse-panel [panelText]="'Requesting Party Details  *'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="reqPartyName" [label]="'Requesting Party'" [prefixIcon]="'domain'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Representative Person'" [prefixIcon]="'person'" [placeHolder]="'Contact Person'" [fieldName]="'reqContactPerson'" [fieldType]="'text'" [validations]="reqContactPersonValidation" [fb]="formBuilder"></app-text-input>
+
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+
+                <app-text-input [parentForm]="myForm" [label]="'Email'" [prefixIcon]="'email'" [placeHolder]="'Email'" [fieldName]="'reqEmail'" [validations]="reqEmailValidation" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Mobile Number'" [prefixIcon]="'phone'" numbersOnly=true [fieldName]="'reqContactNumber'" [fieldType]="'text'" [validations]="reqContactNumberValidation" [fb]="formBuilder"></app-text-input>
+                <!-- <tel-number [parentForm]="myForm" [label]="'Mobile Number'" [fieldName]="'reqContactNumber'" [fieldType]="'text'" [fb]="formBuilder" [validations]="reqContactNumberValidation"></tel-number> -->
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelText]="'BL Party Details  *'" [showPanelIcon]="false" [expanded]="true">
+        <strong style="color: rgb(3, 3, 90)">
+      <app-check-box [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'sameAsReq'" [label]="'Same as Requesting Party
+        Details'" (outputEvent)="onChangesameAsReq($event)">
+      </app-check-box>
+    </strong>
+
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-auto-complete [fieldName]="'bolPartyName'" [label]="'BL Party'" [prefixIcon]="'domain'" [items]="items" [parentForm]="myForm" [fb]="formBuilder" [url]="'/do/app/api/secure/getImporterAgentDetails'" (outputEvent)="onChangeBlParty($event)" #autocompletebl>
+                </app-auto-complete>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Representative Person'" [prefixIcon]="'person'" [placeHolder]="'B/L Party Contact Person'" [fieldName]="'bolContactPerson'" [fieldType]="'text'" [validations]="bolContactPersonValidation" [fb]="formBuilder"></app-text-input>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Email'" [prefixIcon]="'email'" [placeHolder]="'B/L Party Email'" [fieldName]="'bolEmail'" [fieldType]="'email'" [validations]="bolEmailValidation" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Mobile Number'" [prefixIcon]="'phone'" numbersOnly=true [fieldName]="'bolContactNumber'" [fieldType]="'text'" [validations]="bolContactNumberValidation" [fb]="formBuilder"></app-text-input>
+                <!-- <tel-number [parentForm]="myForm" [label]="'Mobile Number'" [fieldName]="'bolContactNumber'" [fieldType]="'text'" [fb]="formBuilder" [validations]="bolContactNumberValidation"></tel-number> -->
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelText]="'DO Party Details  *'" [showPanelIcon]="false" [expanded]="true">
+        <!-- <strong font-weight:bold>
+            <app-check-box [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'dosameAsReq'" [label]="'Same as Requesting Party
+        Details'" (outputEvent)="onChangedosameAsReq($event)">
+            </app-check-box>
+        </strong>
+        <strong font-weight:bold>
+            <app-check-box [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'sameAsBol'" [label]="'Same as BOL Party
+        Details'" (outputEvent)="onChangesameAsBol($event)">
+            </app-check-box>
+        </strong> -->
+        <strong style="color: rgb(3, 3, 90)">
+      <app-radio [parentForm]=" myForm" [fb]="formBuilder" [fieldName]="'type'"
+        (dataEmitter)="onChangedosameAsReq($event)" [options]="[{label:'Same as Requesting Party
+        Details',value:1},{label:'Same as BOL Party
+        Details',value:2}]">
+      </app-radio>
+    </strong>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <!--app-text-input  [parentForm]="myForm" [label]="'DO Party'" 
+      [placeHolder]="'DO Requesting Party'"
+      [fieldName]="'doPartyName'" [fieldType]="'text'" [validations]="doPartyNameValidation"
+      [fb]="formBuilder"></app-text-input-->
+                <app-auto-complete [prefixIcon]="'domain'" [fieldName]="'doPartyName'" [label]="'DO Party'" [items]="items" [parentForm]="myForm" [fb]="formBuilder" [validations]="doPartyNameValidation" [url]="'/do/app/api/secure/getImporterAgentDetails'" (outputEvent)="onChangeDoParty($event)"
+                    #autocompletedo>
+                </app-auto-complete>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Representative Name'" [placeHolder]="'Representative Name'" [fieldName]="'doContactPerson'" [fieldType]="'text'" [validations]="doContactPersonValidation" [prefixIcon]="'person'" [fb]="formBuilder">
+                </app-text-input>
+                <!--app-auto-complete 
+    [fieldName]="'doContactPerson'" [label]="'Representative Name'" 
+    [items]="items" [parentForm]="myForm" [fb]="formBuilder"  [validations]="doContactPersonValidation"
+    [url]="'do/app/api/secure/getShippingAgentDetails'">
+</app-auto-complete-->
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'DO Email'" [prefixIcon]="'email'" [placeHolder]="'DO Email'" [fieldName]="'doEmail'" [fieldType]="'email'" [validations]="doEmailValidation" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-text-input [parentForm]="myForm" [label]="'Mobile Number'" numbersOnly=true [prefixIcon]="'phone'" [fieldName]="'doContactNumber'" [fieldType]="'text'" [validations]="doContactNumberValidation" [fb]="formBuilder"></app-text-input>
+                <!-- <tel-number [parentForm]="myForm" [label]="'Mobile Number'" [fieldName]="'doContactNumber'" [fieldType]="'text'" [fb]="formBuilder" [validations]="doContactNumberValidation"></tel-number> -->
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelText]="'Document Uploads'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <p>
+                <span style="color:red;font-weight:bold">
+          Note:
+        </span>
+                <br>
+                <span style="color:rgb(3, 3, 90);"> Upload Document only of File Type (png/jpg/gif/pdf)
+          and maximum file
+          size
+          {{authLetterMaxFileSizeMb}} MB </span>
+                <br>
+                <span style="color:rgb(3, 3, 90);"> Authorization Letter is mandatory for EBL BoL type.
+        </span>
+            </p>
+        </div>
+        <div class="row row-margin">
+
+            <div class="col-sm">
+
+                <fileupload [parentForm]="myForm" [label]="'Authorization Letter'" [maxFileSizeMb]="authLetterMaxFileSizeMb" [allowedFileTypes]="['pdf','jpeg','png','gif']" [placeHolder]="'Authorization Letter*'" [validations]="authLetterValidation" [fieldName]="'authLetter'"
+                    [fb]="formBuilder" (dataEmitter)="authLetterUpload($event,bol.doAuthRequests.encrDoAuthDocsId)" [dndType]="'true'" [defaultLoaded]="loadAUTHFlag" [defaultFileId]="bol.doAuthRequests.encrDoAuthDocsId" [defaultFileName]="'Authorization Letter '"></fileupload>
+
+                <!-- <u><a href="javascript:void(0)"  *ngIf="bol.doAuthRequests.authLetter!=undefined" (click)="viewFile(bol.doAuthRequests.authDocId,'authLetter')" >View Authorization Letter </a></u> -->
+            </div>
+
+
+            <div class="col-sm">
+
+                <fileupload [parentForm]="myForm" [label]="'Emirates  ID *'" [maxFileSizeMb]="emiratedIdMaxFileSizeMb" [allowedFileTypes]="['pdf','jpeg','png','gif']" [placeHolder]="'Emirates ID '" [validations]="eidValidation" [fieldName]="'emiratesIdCopy'" [fb]="formBuilder"
+                    (dataEmitter)="eidUpload($event,bol.doAuthRequests.encEmDocId)" [dndType]="'true'" [defaultLoaded]="loadEIDFlag" [defaultFileId]="bol.doAuthRequests.encEmDocId" [defaultFileName]="'Emirates ID '">
+                </fileupload>
+                <!-- <u><a href="javascript:void(0)" *ngIf="bol.doAuthRequests.emiratesIdCopy!=undefined"  (click)="viewFile(bol.doAuthRequests.emDocId,'emiratesIdCopy')" >View Emirates ID</a></u>
+ -->
+
+            </div>
+
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <fileupload [parentForm]="myForm" [label]="'B/L Copy *'" [maxFileSizeMb]="blCopyMaxFileSizeMb" [allowedFileTypes]="['pdf','jpeg','png','gif']" [placeHolder]="'B/L Copy'" [validations]="blCopyValidation" [fieldName]="'bolLetter'" [fb]="formBuilder" (dataEmitter)="blCopyUpload($event,bol.doAuthRequests.encBlDocId)"
+                    [dndType]="'true'" [defaultLoaded]="loadBLFlag" [defaultFileId]="bol.doAuthRequests.encBlDocId" [defaultFileName]="'B/L Copy '">
+                </fileupload>
+
+                <!--  <u><a href="javascript:void(0)"  *ngIf="bol.doAuthRequests.bolLetter!=undefined" (click)="viewFile(bol.doAuthRequests.blDocId,'bolLetter')" >View BL Copy</a></u>
+ -->
+            </div>
+            <div class="col-sm">
+                <fileupload [parentForm]="myForm" [label]="'Other Document'" [maxFileSizeMb]="othDocMaxFileSizeMb" [allowedFileTypes]="['pdf','jpeg','png','gif']" [placeHolder]="'Other Document'" [fieldName]="'othDoc'" [fb]="formBuilder" (dataEmitter)="othDocUpload($event,bol.doAuthRequests.encOthDocId)"
+                    [dndType]="'true'" [defaultFileId]="bol.doAuthRequests.encOthDocId" [defaultLoaded]="loadOTHFlag" [defaultFileName]="'Other Document'"></fileupload>
+
+                <!-- <u><a href="javascript:void(0)"   *ngIf=" bol.doAuthRequests.othDoc!=undefined"  (click)="viewFile(bol.doAuthRequests.othDocId,'othDoc')" >View FILE</a></u>
+-->
+            </div>
+
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelText]="'Invoice Details'" [showPanelIcon]="false" [expanded]="true" *ngIf="bol.bolInvoice!=undefined">
+        <!-- <div class="row row-margin">
+            <div>
+                <static-field [label]="''"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [label]="'Invoice Number'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [label]="'Invoice Value'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [label]="'Invoice Validity Date'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [label]="'Download'"></static-field>
+            </div>
+        </div>
+        <div class="row row-margin" *ngFor="let tb of bol.bolInvoice; let i=index">
+            <div>
+                <app-check-box *ngIf="bol.bolInvoice[i].paidStatus!='PAID'  && bol.bolInvoice[i].status!='PAYMENT_PENDING_WITH_IMPORTER'&& bol.bolInvoice[i].status!='PAYMENT_PENDING'" [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'payInvoice'" (outputEvent)="onChangeInvoiceCheckBox(bol.bolInvoice[i].invoiceValue,bol.bolInvoice[i].invoiceNumber,bol.bolInvoice[i].encrInvoiceNumber)">
+                </app-check-box>
+
+                <div *ngIf="bol.bolInvoice[i].paidStatus!='PAID'&& bol.bolInvoice[i].status!=undefined && bol.bolInvoice[i].status.includes('PAYMENT_PENDING','PAYMENT_FAILED','PAYMENT_PENDING_WITH_IMPORTER')">
+                    <i class="material-icons" style="padding-left: 6px;">
+                        check_box
+                    </i>&nbsp;&nbsp;
+                </div>
+                <div *ngIf="bol.bolInvoice[i].paidStatus==='PAID'">
+                    <i class="material-icons" style="padding-left: 6px;">
+                        check_box
+                    </i>&nbsp;&nbsp;
+                </div>
+
+
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[i].invoiceNumber"></static-field>
+            </div>
+  
+
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[i].invoiceValue" [prefixIcon]="'money'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolInvoice[i].invoiceValidityDate| date: 'dd/MM/yyyy'" [prefixIcon]="'date_range'"></static-field>
+            </div>
+
+            <div class="col-sm">
+                <static-field [value]="'Invoice'" *ngIf="bol.bolInvoice[i].path!=null" [hyperLink]="true" [hyperLinkId]="bol.bolInvoice[i].invoiceNumber" (dataEmitter)="viewInvoice(bol.bolInvoice[i])">
+                </static-field>
+
+            </div>
+
+        </div> -->
+        <app-normal-table [tableDefn]="tableDfn" [tableDS]="tableItems" [view]="true" [isScrollableTable]="true" #invoiceTable>
+        </app-normal-table>
+    </collapse-panel>
+
+    <collapse-panel *ngIf="bol.bolInvoice!=undefined && showPayTab" [panelText]="'Payment Details'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin" *ngIf="showPayTab">
+            <div class="col-sm">
+                <static-field [value]="totalAmt" [fieldName]="'totalAmt'" [label]="'Total Amount'" [prefixIcon]="'money'">
+                </static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field *ngIf="paidAmt>0" [value]="paidAmt" [fieldName]="'paidAmt'" [label]="'Paid Amount'" [prefixIcon]="'money'"></static-field>
+                <static-field *ngIf="paidAmt===0" [value]="'0'" [fieldName]="'paidAmt'" [label]="'Paid Amount'" [prefixIcon]="'money'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field *ngIf="payingAmt>0" [value]="payingAmt" [fieldName]="'payingAmt'" [label]="'To Be Paid Amount'" [prefixIcon]="'money'"></static-field>
+                <static-field *ngIf="payingAmt===0" [value]="'0'" [fieldName]="'payingAmt'" [label]="'To Be Paid Amount'" [prefixIcon]="'money'"></static-field>
+
+            </div>
+
+
+
+
+            <div class="col-sm">
+            </div>
+            <div class="col-sm">
+            </div>
+        </div>
+        <div class="row row-margin" *ngIf="showPay||bol.status==='PARTIAL_PAYMENT'||returnPay">
+
+            <div class="col-sm">
+                <app-select [fieldName]="'payOption'" [label]="'Payment Option'" (outputEvent)="onChangePay($event)" [items]="payOptionItems" [parentForm]="myForm" [fb]="formBuilder">
+                </app-select>
+            </div>
+            <div class="col-sm" *ngIf="isDisabled">
+                <app-slide [label]="'Choose to Pay'" [formText]="'Yes /No '" [trueTxt]="'Yes'" [falseTxt]="'No'" [fieldName]="'pay'" [parentForm]="myForm" [fb]="formBuilder" #contract></app-slide>
+            </div>
+            <div class="col-sm" *ngIf="payProofShow">
+                <fileupload [parentForm]="myForm" [label]="'Upload Payment Proof'" [maxFileSizeMb]="0.5" [placeHolder]="'Upload Payment Proof'" [allowedFileTypes]="['pdf','jpeg','png','gif']" [fieldName]="'uploadproof'" [fb]="formBuilder" [dndType]="'true'" [defaultLoaded]="loadPayProofFlag"
+                    [defaultFileId]="" [defaultFileName]="'Payment Proof'" (dataEmitter)="uploadProof($event)" [dndType]="'true'">
+                </fileupload>
+            </div>
+            <div class="col-sm">
+            </div>
+
+        </div>
+
+    </collapse-panel>
+    <collapse-panel *ngIf="bol.status==='RETURNED'|| bol.status==='REJECTED'" [panelText]="'Shipping Agent Remarks/Comments'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="remarks" [label]="'REMARKS'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="comments" [label]="'COMMENTS'"></static-field>
+            </div>
+        </div>
+    </collapse-panel>
+    <!--collapse-panel
+    *ngIf="bol.status==='NEW'||bol.status==='RETURNED'||bol.status==='CANCELLED'||bol.status==='REJECTED'||bol.status==='PARTIAL_PAYMENT'"
+    [panelText]="'Terms and Condition'" [showPanelIcon]="false" [expanded]="true"-->
+    <!-- <collapse-panel [panelText]="'Terms and Condition   *'" [showPanelIcon]="false" [expanded]="true">
+        <div class=" row row-margin">
+            <div class="col-sm">
+                <app-check-box [parentForm]="myForm" [fieldName]="'tnc'" [validations]="tncValidation" [label]="'I Acknowledge that I am Authorized to request this DO according to T&C'"></app-check-box>
+
+            </div>
+        </div>
+    </collapse-panel> -->
+    <collapse-panel [panelText]="'Terms and Condition   *'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm-1" style="padding-left: 21px !important">
+                <app-check-box [parentForm]="myForm" [fieldName]="'tnc'"></app-check-box>
+            </div>
+            <div class="col-sm-11" style="padding-left: 0px !important">
+                <span>I Acknowledge that I am Authorized to request this DO according to <u style="cursor: pointer;"><a (click)="openTC()">Terms and Conditions</a></u><br><br></span>
+            </div>
+        </div>
+    </collapse-panel>
+    <div class="row row-margin">
+        <div class="col-sm button-holder" *ngIf="bol.status==='NEW'||bol.status==='RETURNED'||bol.status==='CANCELLED'||bol.status==='PARTIAL_PAYMENT'">
+            <app-button [buttonType]="'button'" *ngIf="bol.doAuthRequests.doAuthRequestId===undefined" [buttonName]="'Submit'" [icon]="'done'" (clickEvent)="onProceed()"></app-button>
+            <app-button [buttonType]="'button'" *ngIf="bol.status==='RETURNED'||bol.status==='PARTIAL_PAYMENT'" [buttonName]="'Submit DO'" [icon]="'edit'" (clickEvent)="onProceed()"></app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="onClear($event)"></app-button>
+            <app-button [buttonType]="'Submit'" [buttonName]="'Back'" [icon]="'arrow_back'" (clickEvent)="close()">
+            </app-button>
+
+        </div>
+        <div class="col-sm button-holder" *ngIf="bol.status==='INITIATED'||bol.status==='COMPLETED'||bol.status==='REJECTED'||bol.status==='DO_INITIATED'">
+            <app-button [buttonType]="'button'" *ngIf="bol.doAuthRequests.doAuthRequestIdEncr!=undefined &&(bol.doAuthRequests.status!='COMPLETED'|| bol.doAuthRequests.status!='CANCELLED')" [buttonName]="'Amend'" [icon]="'edit'" (clickEvent)="onProceed()"></app-button>
+
+            <app-button [buttonType]="'Submit'" [buttonName]="'Back'" [icon]="'arrow_back'" (clickEvent)="close()">
+            </app-button>
+
+        </div>
+
+    </div>
+
+
+
+</form>

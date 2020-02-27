@@ -1,0 +1,41 @@
+<app-auth-details></app-auth-details>
+<collapse-panel [panelCount]="3" [panelText]="'Payment Details'" [showPanelIcon]="false" [expanded]="true" *ngIf="authStatus!='undefined' && authDetailsComponent.payingAmt>0">
+    <div class="row row-margin">
+
+        <div class="col-sm" *ngIf="authStatus!='undefined' && authDetailsComponent.payingAmt>0" class="disabled">
+            <app-select [fieldName]="'payOption'" [label]="'Payment Option'" (outputEvent)="onChangePay($event)" [items]="payOptionItems" [parentForm]="myForm" [fb]="formBuilder">
+            </app-select>
+        </div>
+
+
+        <div class="col-sm" *ngIf="payProofShow">
+            <fileupload [parentForm]="myForm" [label]="'Upload Payment Proof'" [maxFileSizeMb]="payUploadProofMaxFileSizeMb" [placeHolder]="'Upload Payment Proof'" [allowedFileTypes]="['pdf','jpeg','png','gif']" [fieldName]="'uploadProofDoc'" [fb]="formBuilder" [dndType]="'true'"
+                [defaultLoaded]="loadPayProofFlag" [defaultFileId]="" [defaultFileName]="'Payment Proof'" (dataEmitter)="uploadProof($event)" [dndType]="'true'">
+            </fileupload>
+        </div>
+        <div class="col-sm">
+
+        </div>
+        <div class="col-sm">
+            <!--static-field [value]="paidInvoice" [label]="'Paid Invoice '"
+       ></static-field>-->
+        </div>
+    </div>
+</collapse-panel>
+<collapse-panel [panelText]="'Terms and Condition   *'" [showPanelIcon]="false" [expanded]="true">
+    <div class="row row-margin">
+        <div class="col-sm-1" style="padding-left: 21px !important">
+            <app-check-box [parentForm]="myForm" [fieldName]="'tnc'"></app-check-box>
+        </div>
+        <div class="col-sm-11" style="padding-left: 0px !important">
+            <span>I Acknowledge that I am Authorized to request this DO according to <u style="cursor: pointer;"><a
+            (click)="openTC()">Terms and Conditions</a></u><br><br></span>
+        </div>
+    </div>
+</collapse-panel>
+<div class="col-sm button-holder">
+    <app-button [buttonType]="'button'" *ngIf="authStatus!='undefined'&& (authStatus==='PAYMENT_PENDING_WITH_IMPORTER'||  authStatus==='DO_INITIATED' ||  authStatus==='PARTIAL_PAYMENT') && authDetailsComponent.payingAmt>0" [buttonName]="'Payment'" (clickEvent)="pay()"
+        [icon]="'payment'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="authStatus!='undefined'&& (authStatus==='PAYMENT_FAILED')  && authDetailsComponent.payingAmt>0" [buttonName]="'Reinitiate Payment'" (clickEvent)="reInitiatePay()" [icon]="'payment'"></app-button>
+    <app-button [buttonType]="'button'" [buttonName]="'Back'" (clickEvent)="close()" [icon]="'arrow_back'"></app-button>
+</div>

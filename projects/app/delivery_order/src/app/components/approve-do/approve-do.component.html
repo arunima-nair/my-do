@@ -1,0 +1,9 @@
+<app-auth-details></app-auth-details>
+<div class="col-sm button-holder">
+    <app-button [buttonType]="'button'" *ngIf="showButton" [buttonName]="'REJECT'" (clickEvent)="onRejectReturnCancel('REJECTED')" [icon]="'cancel_presentation'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="showButton" [buttonName]="'RETURN'" [buttonName]="'RETURN'" (clickEvent)="onRejectReturnCancel('RETURNED')" [icon]="'keyboard_returned'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="showButton" [buttonName]="'APPROVE'" (clickEvent)="upoloadDO('COMPLETED',$event)" [icon]="'done_outline'"></app-button>
+    <app-button [buttonType]="'button'" [buttonName]="'Back'" (clickEvent)="close()" [icon]="'arrow_back'"></app-button>
+
+
+</div>

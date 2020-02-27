@@ -1,0 +1,200 @@
+<form [formGroup]="myForm">
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Details'" [showPanelIcon]="false" [expanded]="true">
+
+        <div class="row row-margin">
+
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolNumber" [label]="'B/L Number'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.bol.bolType" [label]="'B/L Type'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.vesselName" [prefixIcon]="'directions_boat'" [label]="'Vessel Name'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.bol.bolDetails.vesselEta| date: 'dd/MM/yyyy'" [prefixIcon]="'date_range'" [label]="'Vessel ETA'"></static-field>
+
+            </div>
+        </div>
+
+        <div class="row row-margin">
+
+
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.voyageNumber" [label]="'Voyager Number'">
+                </static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.importerCode" [label]="'Importer Code'">
+                </static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.shippingAgentCode" [label]="'Shipping Agent Code'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.shippingAgentName" [label]="'Shipping Agent Name'"></static-field>
+
+            </div>
+        </div>
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.containerCount" [label]="'Container Count'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.consigneeName" [label]="'Consignee Name'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bol.bolDetails.vesselAta | date: 'dd/MM/yyyy'" [label]="'Vessel ATA'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.createdDate | date: 'dd/MM/yyyy hh:mm'" [label]="'Created Date'">
+                </static-field>
+            </div>
+        </div>
+    </collapse-panel>
+
+    <collapse-panel [panelCount]="3" [panelText]="'Authorization Request Details'" [showPanelIcon]="false" [expanded]="true">
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.reqPartyName" [prefixIcon]="'domain'" [label]="'Requesting Party'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.reqContactPerson" [prefixIcon]="'person'" [label]="'Representative Person'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.reqEmail" [label]="'Email'" [prefixIcon]="'email'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.reqContactNumber" [label]="'Phone Number'" [prefixIcon]="'phone'">
+                </static-field>
+
+            </div>
+        </div>
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bolPartyName" [label]="'B/L Party Name'" [prefixIcon]="'domain'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.bolContactPerson" [prefixIcon]="'person'" [label]="'Representative Person'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.bolEmail" [label]="'Email'" [prefixIcon]="'email'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.bolContactNumber" [label]="'Phone Number'" [prefixIcon]="'phone'">
+                </static-field>
+
+            </div>
+        </div>
+
+
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.doPartyName" [label]="'DO Party'" [prefixIcon]="'domain'">
+                </static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="authoriseDO.doContactPerson" [label]="'Representative Name'" [prefixIcon]="'person'"></static-field>
+
+            </div>
+
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.doEmail" [label]="'DO Email'" [prefixIcon]="'email'"></static-field>
+
+            </div>
+            <div class="col-sm">
+                <static-field [value]="authoriseDO.doContactNumber" [label]="'DO Contact Number'" [prefixIcon]="'phone'">
+                </static-field>
+            </div>
+        </div>
+    </collapse-panel>
+
+    <collapse-panel [panelCount]="3" [panelText]="'Documents Details'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin" *ngIf="authDoc!=undefined">
+            <div class="col-sm">
+                <static-field [value]="'Authorization Letter'" *ngIf="authoriseDO.encrDoAuthDocsId!=undefined" [hyperLink]="true" [hyperLinkId]="this.authoriseDO.encrDoAuthDocsId" (dataEmitter)="viewFile(this.authoriseDO.encrDoAuthDocsId)">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="'Emirates ID Copy'" *ngIf="authoriseDO.encEmDocId!=undefined" [hyperLink]="true" [hyperLinkId]="this.authoriseDO.encEmDocId" (dataEmitter)="viewFile(this.authoriseDO.encEmDocId)">
+                </static-field>
+
+            </div>
+
+            <div class="col-sm">
+                <static-field [value]="'Bill of Lading Copy'" *ngIf="authoriseDO.encBlDocId!=undefined" [hyperLink]="true" [hyperLinkId]="this.authoriseDO.encBlDocId" (dataEmitter)="viewFile(this.authoriseDO.encBlDocId)">
+                </static-field>
+
+            </div>
+            <div class="col-sm" *ngIf="authoriseDO.encOthDocId!=undefined">
+                <static-field [value]="'Other Document'" *ngIf="authoriseDO.encOthDocId!=undefined" [hyperLink]="true" [hyperLinkId]="this.authoriseDO.encOthDocId" (dataEmitter)="viewFile(this.authoriseDO.encOthDocId)">
+                </static-field>
+            </div>
+        </div>
+    </collapse-panel>
+
+    <collapse-panel *ngIf="authoriseDO.status!='PAYMENT_FAILED'" [panelCount]="4" [panelText]="'BOL Invoice Details'" [showPanelIcon]="false" [expanded]="true">
+        <app-normal-table *ngIf="isShowTable == true" [tableDefn]="tableDfn" [tableDS]="tableItems" [view]="true" (clickEvent)="tableAction($event)" [isScrollableTable]="true" [checkBoxEnabled]="true" #invoiceTable>
+        </app-normal-table>
+        <app-normal-table *ngIf="isShowTable == false" [tableDefn]="tableDfn" [tableDS]="tableItems" [view]="true" (clickEvent)="tableAction($event)" [isScrollableTable]="true" #invoiceTable>
+        </app-normal-table>
+    </collapse-panel>
+
+    <collapse-panel *ngIf="authoriseDO.status==='PAYMENT_FAILED'" [panelCount]="3" [panelText]="'BOL Invoice Details'" [showPanelIcon]="false" [expanded]="true">
+
+        <div class="row row-margin" *ngFor="let tb of paylogInvoice; let i=index">
+
+            <app-check-box *ngIf="paidInvoice.indexOf(i)>-1" [parentForm]="myForm" [fieldName]="'payInvoice'" (outputEvent)="onChangeInvoiceCheckBox(tb.invoiceValue,tb.invoiceNumber,tb.encrInvoiceNumber)">
+            </app-check-box>
+            <div class="col-sm">
+                <static-field [large]="false" [value]="tb.invoiceNumber" [label]="'Invoice No'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="tb.invoiceValue" [label]="'Invoice Value'"></static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="tb.invoiceDate| date: 'dd/MM/yyyy'" [prefixIcon]="'date_range'" [label]="'Invoice Date'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="tb.invoiceValidityDate| date: 'dd/MM/yyyy'" [label]="'Invoice Validity Date'">
+                </static-field>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="'Invoice'" *ngIf="tb.path!=null" [hyperLink]="true" [hyperLinkId]="tb.invoiceNumber" (dataEmitter)="viewInvoice($event,authoriseDO.bol.bolNumber)">
+                </static-field>
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelText]="'Approval History Details'" *ngIf="authoriseDO.approvalLog!=undefined" [showPanelIcon]="false" [expanded]="true">
+        <app-normal-table [tableDefn]="approvalLogDfn" [tableDS]="approvalLogItems" [delete]="false" *ngIf="userType === 'A' || userType === 'IN'" (clickEvent)="approvalLogAction($event)">
+        </app-normal-table>
+        <app-normal-table [tableDefn]="approvalLogDfnImporter" [tableDS]="approvalLogItems" [delete]="false" *ngIf="userType === 'I'" (clickEvent)="approvalLogAction($event)">
+        </app-normal-table>
+    </collapse-panel>
+
+    <collapse-panel [panelText]="'Verify DO History Details'" *ngIf="authoriseDO.status=='PENDING_FOR_APPROVAL'" [showPanelIcon]="false" [expanded]="true">
+        <app-normal-table [tableDefn]="DO_HistoryLog_Defn" [tableDS]="authoriseDOList">
+        </app-normal-table>
+    </collapse-panel>
+
+</form>

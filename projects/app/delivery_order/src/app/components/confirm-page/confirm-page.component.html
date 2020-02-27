@@ -1,0 +1,37 @@
+<app-confirm *ngIf="success" [header_txt]=queryData [success]="true">
+
+
+
+  <form [formGroup]="myForm">
+
+    <div class="row row-margin">
+
+      <div class="col-sm button-holder">
+
+        <app-button [buttonType]="'button'" *ngIf="(transId!=undefined&&transId!=null&&transId!='null')"
+          [buttonName]="'Print Receipt'" (clickEvent)="printReciept('transId')" [icon]="'receipt'"></app-button>
+        <!-- <app-button [buttonType]="'button'" *ngIf="(monitor!=undefined && monitor)" [buttonName]="'Monitor File'"
+          (clickEvent)="monitorPage()" [icon]="'image_search'"></app-button> -->
+        <a *ngIf="(monitor!=undefined && monitor)" [routerLink]="'/monitor'"><u> Check status in Monitor File
+            Upload</u> </a>
+      </div>
+    </div>
+  </form>
+</app-confirm>
+<app-confirm *ngIf="!success" [header_txt]=queryData [error]="true">
+
+
+
+  <form [formGroup]="myForm">
+
+    <div class="row row-margin">
+
+      <div class="col-sm button-holder">
+
+        <app-button [buttonType]="'button'" *ngIf="(transId!=undefined&&transId!=null)" [buttonName]="'Print Receipt'"
+          (clickEvent)="printReciept('transId')" [icon]="'receipt'"></app-button>
+
+      </div>
+    </div>
+  </form>
+</app-confirm>

@@ -1,0 +1,37 @@
+<div class="row">
+        <div class="col-sm-6">
+           <app-text-input [fieldType]="text" [parentForm]="parentForm" [label]="'First Name'" [placeHolder]="'first Name'"  [fieldName]="'firstName'" [fb]="fb" [validations]="formConfig['firstName'].config.validation"></app-text-input>
+        </div>
+        <div class="col-sm-6">
+           <app-text-input [fieldType]="'email'" [parentForm]="parentForm" [label]="'email'" [placeHolder]="'Email'"  [fieldName]="'email'" [fb]="fb" [validations]="formConfig['email'].config.validation"></app-text-input>
+        </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-6">
+           <app-date-input  [parentForm]="parentForm" [label]="'Date'"   [placeHolder]="'Date'"  [fieldName]="'date'"  [validations]="formConfig['date'].config.validation"  [fb]="fb"></app-date-input>
+        </div>
+        <div class="col-sm-6">
+           <app-select [fieldName]="'selectItem'" [label]="'Select'"  [items]="formConfig['selectItem'].config.items" [parentForm]="parentForm" [fb]="fb"></app-select>
+        </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-6">
+           <app-auto-complete [fieldName]="'autoSelectItem'" [label]="'Auto Complete'"  [items]="formConfig['autoSelectItem'].config.items" [parentForm]="parentForm" [fb]="fb" [url]=""></app-auto-complete>
+        </div>
+        <div class="col-sm-6">
+           <app-select [fieldName]="'multiSelect'" [label]="'Select'"  [items]="formConfig['multiSelect'].config.items" [parentForm]="parentForm" [fb]="fb" [multiple]="'true'"></app-select>
+        </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-6">
+           <app-textarea [parentForm]="parentForm" [label]="'Address'" [placeHolder]="'Address'" [fieldName]="'address'" [fb]="fb" [validations]="formConfig['address'].config.validation"></app-textarea>
+        </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-6">
+           <app-radio [parentForm]="parentForm" [label]="'Gender'" [placeHolder]="'Gender'"  [fieldName]="'gender'" [fb]="fb" [validations]="formConfig['gender'].config.validation"  [options]="formConfig['gender'].config.items"></app-radio>
+        </div>
+        <div class="col-sm-6">
+           <app-slide [label]="'Yes/No'" [fieldName]="'yn'"  [parentForm]="parentForm" [fb]="fb" ></app-slide>
+        </div>
+     </div>

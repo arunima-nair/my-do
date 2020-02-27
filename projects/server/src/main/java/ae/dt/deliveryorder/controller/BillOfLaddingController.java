@@ -1,0 +1,774 @@
+package ae.dt.deliveryorder.controller;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+//import org.apache.commons.csv.CSVFormat;
+//import org.apache.commons.csv.CSVParser;
+//import org.apache.commons.csv.CSVRecord;
+import ae.dt.deliveryorder.dto.*;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ae.dt.common.constants.Constants;
+import ae.dt.common.controller.BaseController;
+import ae.dt.common.domain.DTAgentView;
+import ae.dt.common.dto.DataDto;
+import ae.dt.common.dto.MailDTO;
+import ae.dt.common.dto.PaginationDTO;
+import ae.dt.common.dto.PartyDetailsDTO;
+import ae.dt.common.dto.ResponseDto;
+import ae.dt.common.dto.SelectDto;
+import ae.dt.common.dto.UserDTO;
+import ae.dt.common.dto.ViewDTO;
+import ae.dt.common.mq.MQSender;
+import ae.dt.common.util.ApplicationPropertyLoader;
+import ae.dt.common.util.EncryptionUtil;
+import ae.dt.common.util.MailContentBuilder;
+import ae.dt.common.util.MailTemplateResolver;
+import ae.dt.common.util.Utilities;
+import ae.dt.deliveryorder.domain.BolInvoice;
+import ae.dt.deliveryorder.domain.RequestBolInvoice;
+import ae.dt.deliveryorder.facade.BillOfLaddingFacade;
+import ae.dt.deliveryorder.facade.DeliveryOrderFacade;
+import ae.dt.deliveryorder.service.BillOfLaddingService;
+import ae.dt.deliveryorder.service.EmailNotificationService;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @author ARUNIMA NAIR
+ *
+ */
+@Slf4j
+@RestController
+public class BillOfLaddingController extends BaseController {
+	@Autowired
+	BillOfLaddingFacade bolFacade;
+
+	@Autowired
+	MQSender mqSender;
+
+	@Autowired
+	MailContentBuilder mailContentBuilder;
+
+	@Autowired
+	MailTemplateResolver mailTemplateResolver;
+
+	@Value("${invoicefilepath}")
+	private String invoicefilepath;
+
+	@Value("#{'${bol.csv.mandatory}'.split(',')}")
+	private List<String> csvMandatoryList;
+	@Value("#{'${bol.csv.header}'.split(',')}")
+	private List<String> csvheaderList;
+	@Value("${from.email}")
+	private String fromMail;
+	@Value("${cc.email}")
+	private String ccEmail;
+
+	@Value("${bol.fileSize}")
+	private Integer bolFileSize;
+
+	@Value("${invoice.fileSize}")
+	private Integer invoiceFileSize;
+	
+	@Value("#{'${shipping.agent.list}'.split(',')}")
+	private List<String> shippingAgentList;
+
+	@Autowired
+	EmailNotificationService emailNotificationService;
+
+	@Autowired
+	DeliveryOrderFacade deliveryOrderFacade;
+
+	@Autowired
+	BillOfLaddingFacade billOfLaddingFacade;
+	
+	ApplicationPropertyLoader applicationPropertyLoader;
+
+	@RequestMapping("/api/secure/test1")
+	public @ResponseBody String setupVatProfileApp1(HttpServletRequest request) {
+		return "test";
+	}
+
+	Logger logger = LoggerFactory.getLogger(BillOfLaddingController.class);
+
+	/**
+	 * @param uploadDoc
+	 * @param httpServletRequest
+	 * @return
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	@PostMapping(path = "/app/api/secure/saveBLdetailsUploadFile")
+	public ResponseDto saveBLdetails(@RequestParam("fileName") String fileName, @RequestBody String uploadDoc,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+		log.info("BOL saving!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		String result = null;
+		// result = bolValidation(uploadDoc, "bol", httpServletRequest);
+		result = bolFacade.uploadBolFile(uploadDoc, fileName, httpServletRequest);
+		if (result != null) {
+
+			return new ResponseDto(Constants.REST_STATUS_SUCCESS, null,
+					Constants.CONFIRM_MESSAGES.BOL_UPLOAD_SUCCESS.displayName, null);
+		} else
+			return new ResponseDto(Constants.REST_STATUS_FAIL, null,
+					Constants.CONFIRM_MESSAGES.BOL_UPLOAD_FAILED.displayName, null);
+
+	}
+
+	/**
+	 * saveInvoicedetails API This API saves invoice file path.
+	 * 
+	 * @return ResponseDto containing message string
+	 */
+	/**
+	 * @param uploadDoc
+	 * @param httpServletRequest
+	 * @return
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	@PostMapping(path = "/app/api/secure/saveInvoicedetails")
+	public ResponseDto saveInvoicedetails(@RequestParam("fileName") String fileName, @RequestBody String uploadDoc,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		log.info("Here in Invoice saving!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		String result = "";
+
+		result = bolFacade.processInvoice(uploadDoc, httpServletRequest, null, fileName);
+
+		if (result != null)
+			if (result.equalsIgnoreCase("INVOICE UPLOADED.")) {
+				return new ResponseDto(Constants.REST_STATUS_SUCCESS, null,
+						"Invoice copy will be mapped to the corresponding invoice after successful processing.", null);
+			} else {
+				return new ResponseDto(Constants.REST_STATUS_FAIL, null, result, null);
+			}
+		else
+			return new ResponseDto(Constants.REST_STATUS_FAIL, null, result, null);
+	}
+
+
+	@RequestMapping(path = "/app/api/secure/getBLdetailsForInternal")
+	public DataDto<BoLDTO> getBLdetailsForInternal(@RequestParam("bolNo") String bolNumberEncr,
+			HttpServletRequest httpServletRequest) {
+		logger.info("inside getBLdetails");
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		List<BoLDTO> bolDTOList = bolFacade.getBLdetailsForInternal(bolNo);
+		return new DataDto<BoLDTO>(bolDTOList);
+	}
+
+	/**
+	 * searchBLdetails API This API get list of BL details.
+	 * 
+	 * @return pageDataDTO containing data,totalPages,size,pageNumber
+	 */
+	@RequestMapping(path = "/app/api/secure/searchBLdetails")
+	public PaginationDTO<ViewDTO> searchBLdetails(Pageable pageable, HttpServletRequest httpServletRequest) {
+		logger.info("inside searchBLdetails");
+
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String pgSize = (String) httpServletRequest.getParameter("pgSize");
+		String pgNo = (String) httpServletRequest.getParameter("pgNo");
+		String sortorder = (String) httpServletRequest.getParameter("sort_order");
+		String sortcol = (String) httpServletRequest.getParameter("sort_col");
+		pageable = new PageRequest(Integer.valueOf(pgNo) - 1, Integer.valueOf(pgSize));
+
+		logger.info(pgSize + "----------------" + pgNo);
+		logger.info("pgSize==" + pgSize + "-------------pgNo==" + pgNo);
+		logger.info("pageable===" + pageable.toString());
+
+		String bolNo = (String) httpServletRequest.getParameter("bolNo");
+		String bolInvNo = (String) httpServletRequest.getParameter("invoiceNo");
+		String status = (String) httpServletRequest.getParameter("status");
+		String frmDate = (String) httpServletRequest.getParameter("frmDate");
+		String toDate = (String) httpServletRequest.getParameter("toDate");
+		String shippingLine = (String) httpServletRequest.getParameter("shippingLine");
+		String impCode = (String) httpServletRequest.getParameter("impCode");
+
+		String sortCol = "";
+		if (StringUtils.equalsIgnoreCase(sortcol, "0"))
+			sortCol = "bolNumber";
+		if (StringUtils.equalsIgnoreCase(sortcol, "4"))
+			sortCol = "createdDate";
+		if (StringUtils.equalsIgnoreCase(status, "Choose") || StringUtils.isBlank(status))
+			status = StringUtils.defaultString(status);
+		if (StringUtils.isBlank(bolNo))
+			bolNo = StringUtils.defaultString(bolNo);
+		if (StringUtils.isBlank(bolInvNo))
+			bolInvNo = StringUtils.defaultString(bolInvNo);
+		if (StringUtils.isBlank(impCode))
+			impCode = StringUtils.defaultString(impCode);
+		if (frmDate == null)
+			frmDate = "";
+		else if (StringUtils.equalsIgnoreCase(frmDate, "null") || StringUtils.equalsIgnoreCase(frmDate, "01-01-1970")
+				|| StringUtils.equalsIgnoreCase(frmDate, ""))
+			frmDate = "";
+		if (toDate == null)
+			toDate = "";
+		else if (StringUtils.equalsIgnoreCase(toDate, "null") || StringUtils.equalsIgnoreCase(toDate, "01-01-1970")
+				|| StringUtils.equalsIgnoreCase(toDate, ""))
+			toDate = "";
+		SearchDTO searchDTO = new SearchDTO().builder().bolNumber(bolNo).bolInvoiceNumber(bolInvNo)
+				.shippingLineName(shippingLine).status(status).impCode(impCode).frmDate(frmDate).toDate(toDate).build();
+
+		PaginationDTO<ViewDTO> viewDTO = bolFacade.getBolDetails(searchDTO, pageable, userDTO, sortorder, sortCol);
+
+		return viewDTO;
+	}
+
+	@RequestMapping(value = "/app/api/file/getFile")
+	public String loadFile(@RequestParam("bol") String bol, @RequestParam("invNo") String invNo,
+			HttpServletResponse response) throws URISyntaxException, IOException {
+
+		InputStream is;
+		String path = "";
+		invNo = EncryptionUtil.decrypt(invNo);
+		// bol = EncryptionUtil.decryptWithoutUserInfo(bol);
+		BolInvoice bolInvoice = bolFacade.getBolInvoicebyBolNumber(invNo, bol);
+		if (bolInvoice != null) {
+			path = bolInvoice.getPath();
+			if (path != null) {
+				File file = new File(path);
+				if (file.exists()) {
+					is = new FileInputStream(file);
+					response.setContentType("application/octet-stream");
+					response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
+					OutputStream os = response.getOutputStream();
+					byte[] buffer = new byte[1024];
+					int len;
+					while ((len = is.read(buffer)) != -1) {
+						os.write(buffer, 0, len);
+					}
+					os.flush();
+					os.close();
+					is.close();
+				} else {
+					return "Invoice Not Found.";
+				}
+			} else {
+				return "No Invoice Uploaded.";
+			}
+
+		} else {
+			return "Record Not Found.";
+		}
+
+		return "SUCCESS";
+	}
+
+	/**
+	 * saveAmendBLdetailsScreen API This API amend BL details (through screen).
+	 * 
+	 * @param FileDTO
+	 * @return ResponseDto containing message string
+	 */
+	@PostMapping(path = "/app/api/secure/saveAmendBLdetails")
+	public ResponseDto saveAmendBLdetailsScreen(@RequestBody List<BolInvoiceDTO> bolInvoiceItems,
+			HttpServletRequest httpServletRequest) {
+		String result = null;
+
+		BOL bol = new BOL();
+		List<Invoice> invoiceList = new ArrayList<>();
+//		if(httpServletRequest.getParameter("bolId") != "undefined" && httpServletRequest.getParameter("bolId") !=null && !httpServletRequest.getParameter("bolId").isEmpty()) {
+//				bol.setBolId(Long.valueOf(httpServletRequest.getParameter("bolId")));
+//		}
+
+		bol.setBolNumber(EncryptionUtil.decrypt(httpServletRequest.getParameter("bolNumber")));
+		bol.setBolType(httpServletRequest.getParameter("bolType"));
+		// Assign TO BOL Details
+
+		bol.setShippingAgentCode(httpServletRequest.getParameter("shippingAgentCode"));
+		bol.setShippingAgentName(httpServletRequest.getParameter("shippingAgentName"));
+		bol.setVesselName(httpServletRequest.getParameter("vesselName"));
+		bol.setVoyageNumber(httpServletRequest.getParameter("voyageNumber"));
+		bol.setConsigneeCode(httpServletRequest.getParameter("importerCode"));
+		bol.setContainerCount(httpServletRequest.getParameter("containerCount"));
+		bol.setConsigneeName(httpServletRequest.getParameter("consigneeName"));
+
+		if (StringUtils.isNotEmpty(httpServletRequest.getParameter("vesselEta"))) {
+			String vesselEta = httpServletRequest.getParameter("vesselEta");
+			bol.setVesselETA(vesselEta);
+		}
+		if (StringUtils.isNotEmpty(httpServletRequest.getParameter("vesselAta"))) {
+			String vesselAta = httpServletRequest.getParameter("vesselAta");
+			bol.setVesselATA(vesselAta);
+		}
+		for( BolInvoiceDTO bolInvoiceDTO:bolInvoiceItems) {
+			if(bolInvoiceDTO.getPath()!=null) {
+				if(!bolInvoiceDTO.getPath().startsWith("data:application/pdf")){
+					bolInvoiceDTO.setPath(EncryptionUtil.decrypt(bolInvoiceDTO.getPath()));
+				}
+			}
+		}
+
+		bolFacade.updateBLDetails(bol, bolInvoiceItems);
+		return new ResponseDto(Constants.REST_STATUS_SUCCESS, null, "BOL Details Amended Successfully", null);
+	}
+
+
+	@RequestMapping(path = "/app/api/secure/requestBLInvoice")
+	public ResponseDto requestBLInvoiceDetails(HttpServletRequest httpServletRequest)
+			throws IOException, ParseException {
+		String result = null;
+		String id = (String) httpServletRequest.getParameter("id");
+		String agentCode = (String) httpServletRequest.getParameter("shippingagentCode");
+		String type = (String) httpServletRequest.getParameter("type");
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String reqEmail = (String) httpServletRequest.getParameter("reqEmail");
+		String agentType = (String) httpServletRequest.getParameter("shippingAgentType");
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+
+		String[] listOfCCEmail = null;
+//		String agentEmail = deliveryOrderFacade.getAdminEmailByAgentCode(agentCode, subIds);
+		String agentEmail = billOfLaddingFacade.getShippingAgentEmailId(agentCode);
+		String agentName=deliveryOrderFacade.getAgentNameByAgentCode(agentCode, subIds);
+		List<String> impsubIds = new ArrayList<>();
+		impsubIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		impsubIds.add(Constants.AGENT_TYPE.CLEARING_AGENT.value);
+		impsubIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		impsubIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		String impName=deliveryOrderFacade.getAgentNameByAgentCode(userDTO.getAgentCode(), impsubIds);
+		String impEmail = deliveryOrderFacade.getAdminEmailByAgentCode(userDTO.getAgentCode(), impsubIds);
+		//String impEmail = billOfLaddingFacade.getShippingAgentEmailId(userDTO.getAgentCode());
+		
+		// String email="arunima.nair@dubaitrade.ae";
+		if (agentEmail != null) {
+			result = bolFacade.requestBLInvoiceDetails(id, agentCode, userDTO, type,agentType);
+
+			if (result != null) {
+				if (result.equalsIgnoreCase("Bol Requested.")) {
+					if (type.equalsIgnoreCase("BOL_REQUEST")) {
+						Map<String, String> mailContentMap = new HashMap<String, String>();
+						mailContentMap.put("content", type);
+						String image = getClass().getResource("/images/email_header.png").toString();
+						mailContentMap.put("imageURL", image);
+						String head = "Requesting Bill of Lading with No:" + id;
+						mailContentMap.put("head", head);
+						mailContentMap.put("bol", id);
+						mailContentMap.put("agentName", agentName);
+					//	mailContentMap.put("contactNumber", reqContactNumber);
+						mailContentMap.put("impName", impName);
+						mailContentMap.put("impEmail", impEmail);
+						listOfCCEmail = ccEmail.split(";");
+						emailNotificationService.sendMail(
+								new MailDTO().builder().toAddress(agentEmail).ccAddress(listOfCCEmail)
+										.subject("Request For BOL").mailContentMap(mailContentMap).build(),
+								Constants.EMAIL_TYPE.BOL_REQUEST.value);
+					}
+				} else if (result.equalsIgnoreCase("Invoice Requested.")) {
+					if (type.equalsIgnoreCase("INVOICE_REQUEST")) {
+						if (reqEmail != null) {
+							String bolNo=bolFacade.getBolNobyInvoiceNo(id);
+							Map<String, String> mailContentMap = new HashMap<String, String>();
+							mailContentMap.put("content", type);
+							String image = getClass().getResource("/images/email_header.png").toString();
+							mailContentMap.put("imageURL", image);
+							String head = "Requesting INVOICE with No:" + id;
+							mailContentMap.put("head", head);
+							mailContentMap.put("invoice", id);
+							mailContentMap.put("reqEmail", reqEmail);
+							mailContentMap.put("agentName", agentName);
+						//	mailContentMap.put("contactNumber", reqContactNumber);
+							mailContentMap.put("impName", impName);
+							mailContentMap.put("impEmail", impEmail);
+							mailContentMap.put("bol", bolNo);
+							listOfCCEmail = ccEmail.split(";");
+
+							emailNotificationService.sendMail(
+									new MailDTO().builder().toAddress(reqEmail).ccAddress(listOfCCEmail)
+											.subject("Request For Invoice").mailContentMap(mailContentMap).build(),
+											Constants.EMAIL_TYPE.INVOICE_REQUEST.value);
+						}
+					}
+
+				} else if (type.equalsIgnoreCase("DO_REQUEST")) {
+					Map<String, String> mailContentMap = new HashMap<String, String>();
+					mailContentMap.put("content", type);
+					String image = getClass().getResource("/images/email_header.png").toString();
+					mailContentMap.put("imageURL", image);
+					String head = "Requesting Delivery Order with No:" + id;
+					mailContentMap.put("head", head);
+					mailContentMap.put("bol", id);
+					mailContentMap.put("detail", "");
+					String reqParty = "";
+					mailContentMap.put("reqParty", reqParty);
+					listOfCCEmail = ccEmail.split(";");
+					emailNotificationService.sendMail(new MailDTO().builder().toAddress(agentEmail).ccAddress(listOfCCEmail)
+							.subject("Request For DO").mailContentMap(mailContentMap).build(), "DO_REQUEST");
+				}
+				return new ResponseDto(Constants.REST_STATUS_SUCCESS, null, result, null);
+			}
+
+			else
+				return new ResponseDto(Constants.REST_STATUS_FAIL, null, result, null);
+		} else
+			return new ResponseDto(Constants.REST_STATUS_FAIL, null, "EMAIL ID NOT FOUND.", null);
+	}
+
+	@GetMapping(path = "/app/api/secure/getShippingAgentDetails")
+	public List<PartyDetailsDTO> getShippingAgentDetails(@RequestParam("q") String searchParam,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		return bolFacade.getAgentDetail(searchParam, subIds);
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getImporterAgentDetails")
+	public List<PartyDetailsDTO> getImporterAgentDetails(@RequestParam("q") String searchParam,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		subIds.add(Constants.AGENT_TYPE.CLEARING_AGENT.value);
+		subIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		return bolFacade.getAgentDetail(searchParam, subIds);
+
+	}
+	
+	@GetMapping(path = "/app/api/secure/getDOImporterAgentDetails")
+	public List<PartyDetailsDTO> getDOImporterAgentDetails(@RequestParam("q") String searchParam,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		subIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		return bolFacade.getAgentDetail(searchParam, subIds);
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/alertnotify")
+	public ResponseDto alertnotify(HttpServletRequest httpServletRequest) throws IOException, ParseException {
+		String bolNos = (String) httpServletRequest.getParameter("bol");
+		String emails = (String) httpServletRequest.getParameter("email");
+		String result = null;
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		result = bolFacade.alertnotify(bolNos, emails, userDTO);
+		return new ResponseDto(Constants.REST_STATUS_SUCCESS, null, result, null);
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/getInvoiceDetails")
+	public ResponseDto getInvoiceDetails(@RequestParam("invNo") String invNo, HttpServletRequest httpServletRequest)
+			throws IOException, ParseException {
+		String result = null;
+		BolInvoice bolInvoice = bolFacade.getInvoiceDetails(invNo);
+		if (bolInvoice != null)
+			result = bolInvoice.getBol().getBolNumber();
+		return new ResponseDto(Constants.REST_STATUS_SUCCESS, null, result, null);
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/getDocFileSize")
+	public List<SelectDto> getDocFileSize(HttpServletRequest httpServletRequest) throws Exception {
+		return bolFacade.getDocFileSize();
+	}
+
+	@GetMapping(path = "/app/api/secure/getShippingAgentSearchAttribute")
+	public List<SelectDto> getShippingAgentSearchAttribute(@RequestParam("q") String agentCode,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		return bolFacade.getShippingAgentSearchAttribute(agentCode);
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getInvoiceExpiryDate")
+	public Date getInvoiceExpiryDate(@RequestParam("invoiceNumber") String invoiceNumber,
+			@RequestParam("bol") String bolNumber, HttpServletRequest httpServletRequest)
+			throws IOException, ParseException {
+
+		return bolFacade.getInvoiceExpiryDate(invoiceNumber, bolNumber);
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getSAInitiatorPartialPayment")
+	public List getSAInitiatorPartialPayment(@RequestParam("q") String agentCode, HttpServletRequest httpServletRequest)
+			throws IOException, ParseException {
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		return bolFacade.getSAInitiatorPartialPayment(agentCode, userDTO.getAgentType());
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getInvoiceType")
+	public List<InvoiceTypeDTO> getInvoiceType() throws IOException, ParseException {
+
+		return bolFacade.getInvoiceTypes();
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/getInvoicesUploaded")
+	public List<SelectDto> getInvoicesUploaded(@RequestParam("bol") String bolNumberEncr)
+			throws IOException, ParseException {
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		List bolInvListwithoutPath = new ArrayList();
+		List<BolInvoice> bolInvList = bolFacade.getInvoicesUploaded(bolNo);
+		if (bolInvList != null)
+			if (bolInvList.size() > 0) {
+				for (BolInvoice bolInv : bolInvList) {
+					if (bolInv.getPath() == null)
+						bolInvListwithoutPath.add(new SelectDto(bolInv.getInvoiceNumber(), bolInv.getInvoiceNumber()));
+				}
+			} else {
+				bolInvListwithoutPath.add(new SelectDto("NO_INVOICE", "NO_INVOICE"));
+			}
+		return bolInvListwithoutPath;
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getImporterAgentDetailsWithEmail")
+	public List<PartyDetailsDTO> getImporterAgentDetailsWithEmail(@RequestParam("q") String searchParam,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		subIds.add(Constants.AGENT_TYPE.CLEARING_AGENT.value);
+		subIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		return bolFacade.getImporterAgentDetailsWithEmail(searchParam, subIds);
+		// return bolFacade.getAgentDetail(searchParam, subIds);
+
+	}
+
+	@GetMapping(path = "/app/api/secure/getImporterAgentDetailsWithEmailReqParty")
+	public PartyDetailsDTO getImporterAgentDetailsWithEmailReqParty(@RequestParam("q") String searchParam,
+			HttpServletRequest httpServletRequest) throws IOException, ParseException {
+
+		List<String> subIds = new ArrayList<>();
+		// subIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		// subIds.add(Constants.AGENT_TYPE.CLEARING_AGENT.value);
+		// subIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		// subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		UserDTO user = (UserDTO) httpServletRequest.getAttribute("userName");
+		subIds.add(user.getAgentType());
+		return bolFacade.getImporterAgentDetailsWithEmailReqParty(searchParam, subIds, user.getUserName());
+
+	}
+
+	@GetMapping(path = "/app/api/getFileSize")
+	public ResponseEntity<Map<String, Integer>> getFileSize() {
+		Map<String, Integer> response = new HashMap<String, Integer>();
+		response.put("bolFileSize", bolFileSize);
+		response.put("invoiceFileSize", invoiceFileSize);
+		return ResponseEntity.accepted().body(response);
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/requestNewDO")
+	public ResponseDto requestNewDO(HttpServletRequest httpServletRequest) throws IOException, ParseException {
+		String result = null;
+
+		String id = (String) httpServletRequest.getParameter("id");
+		id = EncryptionUtil.decrypt(id);
+		String agentCode = (String) httpServletRequest.getParameter("shippingagentCode");
+		String type = (String) httpServletRequest.getParameter("type");
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String reqEmail = (String) httpServletRequest.getParameter("reqEmail");
+		List<String> subIds = new ArrayList<>();
+		subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+		
+		List<String> impsubIds = new ArrayList<>();
+		impsubIds.add(Constants.AGENT_TYPE.IMPORTER.value);
+		impsubIds.add(Constants.AGENT_TYPE.CLEARING_AGENT.value);
+		impsubIds.add(Constants.AGENT_TYPE.FREEZONE_LICENCE.value);
+		impsubIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+		
+		String shName=deliveryOrderFacade.getAgentNameByAgentCode(agentCode, subIds);
+
+		String[] listOfCCEmail = null;
+		if (reqEmail != null) {
+
+			Map<String, String> mailContentMap = new HashMap<String, String>();
+			mailContentMap.put("content", type);
+			String image = getClass().getResource("/images/email_header.png").toString();
+			mailContentMap.put("imageURL", image);
+			String head = "Requesting New Delivery Order with No:" + id;
+			mailContentMap.put("head", head);
+			mailContentMap.put("bol", id);
+			mailContentMap.put("detail", "");
+			mailContentMap.put("shName",shName);
+			mailContentMap.put("impName",deliveryOrderFacade.getAgentNameByAgentCode(userDTO.getAgentCode(), impsubIds));
+			mailContentMap.put("impEmail", deliveryOrderFacade.getAdminEmailByAgentCode(userDTO.getAgentCode(), impsubIds));
+			listOfCCEmail = ccEmail.split(";");
+			emailNotificationService.sendMail(new MailDTO().builder().toAddress(reqEmail).ccAddress(listOfCCEmail)
+					.subject("Request For New DO").mailContentMap(mailContentMap).build(), Constants.EMAIL_TYPE.NEW_DO_REQUEST.value);
+			return new ResponseDto(Constants.REST_STATUS_SUCCESS, null,
+					"New Do Request Process Successfully for the BOL Number : " + id, null);
+		}
+
+		else
+			return new ResponseDto(Constants.REST_STATUS_FAIL, null, "EMAIL ID NOT FOUND.", null);
+	}
+
+	@RequestMapping(path = "/app/api/secure/getAgentDetailByAgentCodeAndBusinessGroupId")
+	public List<SelectDto> getAgentDetailByAgentCodeAndBusinessGroupId(@RequestParam("q") String agentCode,
+			@RequestParam("agentType") String businessGroupId) {
+
+		DTAgentView dTAgentView = bolFacade.getAgentDetailByAgentCodeAndBusinessGroupId(agentCode, businessGroupId);
+		List<SelectDto> agentDetailList = new ArrayList();
+		agentDetailList.add(new SelectDto(dTAgentView.getAgentCode() + '-' + dTAgentView.getAgentName(),
+				dTAgentView.getAgentCode()));
+		return agentDetailList;
+
+	}
+	
+	@RequestMapping(path = "/app/api/secure/getAgentDetailByUserDTO")
+	public List<SelectDto> getAgentDetailByUserDTO(HttpServletRequest httpServletRequest) {
+
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userDTO");
+		DTAgentView dTAgentView = bolFacade.getAgentDetailByAgentCodeAndBusinessGroupId(userDTO.getAgentCode(), userDTO.getAgentType());
+		List<SelectDto> agentDetailList = new ArrayList();
+		agentDetailList.add(new SelectDto(dTAgentView.getAgentCode() + '-' + dTAgentView.getAgentName(),
+				dTAgentView.getAgentCode()));
+		return agentDetailList;
+
+	}
+
+	@GetMapping(path = "/app/api/secure/checkInvoice")
+	public Boolean checkInvoice(@RequestParam("invoiceNumber") String invoiceNumber,
+			@RequestParam("bol") String bolNumber, HttpServletRequest httpServletRequest)
+			throws IOException, ParseException {
+		bolNumber = EncryptionUtil.decrypt(bolNumber);
+		return bolFacade.checkInvoice(invoiceNumber, bolNumber);
+
+	}
+
+	@RequestMapping(path = "/app/api/secure/getBLdetailsNew")
+	public DataDto<BoLDTO> getBLdetailsNew(@RequestParam("bolNo") String bolNumberEncr,
+			HttpServletRequest httpServletRequest) {
+		logger.info("********************   Started to fetch the BOL Details   ********************");
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		List<BoLDTO> bolDTOList = bolFacade.getBLdetailsNew(bolNo, userDTO.getAgentType());
+		logger.info("********************   Finshed to fetch the BOL Details   ********************");
+		return new DataDto<BoLDTO>(bolDTOList);
+	}
+	@RequestMapping(path = "/app/api/secure/saveBolVersion")
+	public BoLDTO saveBolVersion(@RequestParam("bolNo") String bolNumberEncr,
+			HttpServletRequest httpServletRequest) {
+	
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		return bolFacade.saveBolVersion(bolNo, userDTO);
+	}
+	
+	
+	@GetMapping(path = "/app/api/secure/getBolVersion")
+	public Long getBolVersion(@RequestParam("bolNo") String bolNumberEncr,
+			HttpServletRequest httpServletRequest) {
+	
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		return bolFacade.getBolVersion(bolNo);
+		//return new DataDto<BoLDTO>(bolDTOList);
+	}
+
+
+	@RequestMapping(path = "/app/api/secure/deleteBol")
+	public Boolean deleteBol(@RequestParam("bolNo") String bolNumberEncr,
+			HttpServletRequest httpServletRequest) {
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String bolNo = EncryptionUtil.decrypt(bolNumberEncr);
+		
+		return bolFacade.deleteBol(bolNo,userDTO);
+	}
+	
+	@RequestMapping(path = "/app/api/secure/searchReqBLInvoicedetails")
+	public PaginationDTO<RequestBolInvoiceDTO> searchReqBLInvoicedetails(Pageable pageable, HttpServletRequest httpServletRequest) {
+
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String pgSize = (String) httpServletRequest.getParameter("pgSize");
+		String pgNo = (String) httpServletRequest.getParameter("pgNo");
+		String sortorder = (String) httpServletRequest.getParameter("sort_order");
+		String sortcol = (String) httpServletRequest.getParameter("sort_col");
+		pageable = new PageRequest(Integer.valueOf(pgNo) - 1, Integer.valueOf(pgSize));
+
+		String bolNo = (String) httpServletRequest.getParameter("bolNo");
+		String bolInvNo = (String) httpServletRequest.getParameter("invoiceNo");
+		String frmDate = (String) httpServletRequest.getParameter("frmDate");
+		String toDate = (String) httpServletRequest.getParameter("toDate");
+		String shippingLine = (String) httpServletRequest.getParameter("shippingLine");
+		String impCode = (String) httpServletRequest.getParameter("impCode");
+		String reqType = (String) httpServletRequest.getParameter("reqType");
+		
+
+		String sortCol = "";
+		if (StringUtils.equalsIgnoreCase(sortcol, "0"))
+			sortCol = "bolNo";	
+		if (StringUtils.equalsIgnoreCase(sortcol, "4"))
+			sortCol = "createdDate";		
+		if (StringUtils.isBlank(bolNo))
+			bolNo = StringUtils.defaultString(bolNo);
+		if (StringUtils.isBlank(bolInvNo))
+			bolInvNo = StringUtils.defaultString(bolInvNo);
+		if (StringUtils.isBlank(impCode))
+			impCode = StringUtils.defaultString(impCode);
+		if (frmDate == null)
+			frmDate = "";
+		else if (StringUtils.equalsIgnoreCase(frmDate, "null") || StringUtils.equalsIgnoreCase(frmDate, "01-01-1970")
+				|| StringUtils.equalsIgnoreCase(frmDate, ""))
+			frmDate = "";
+		if (toDate == null)
+			toDate = "";
+		else if (StringUtils.equalsIgnoreCase(toDate, "null") || StringUtils.equalsIgnoreCase(toDate, "01-01-1970")
+				|| StringUtils.equalsIgnoreCase(toDate, ""))
+			toDate = "";
+		SearchDTO searchDTO = new SearchDTO().builder().bolNumber(bolNo).bolInvoiceNumber(bolInvNo).reqType(reqType)
+				.shippingLineName(shippingLine).impCode(impCode).frmDate(frmDate).toDate(toDate).build();
+
+		PaginationDTO<RequestBolInvoiceDTO> requestBolInvoice = bolFacade.searchReqBLInvoicedetails(searchDTO, pageable, userDTO, sortorder, sortCol);
+
+		return requestBolInvoice;
+	}
+	@GetMapping(path = "/app/api/getFileDelimtter")
+	public ResponseEntity<Map<String, String>> getFileDelimtter( HttpServletRequest httpServletRequest) {
+		String agentCode=(String) httpServletRequest.getParameter("agent");
+		Map<String, String> response = new HashMap<String, String>();
+		
+		UserDTO userDto=new UserDTO();
+		userDto.setAgentCode(agentCode);
+		String fileDelimtter =bolFacade.getSAinvoiceDelimitter(userDto);
+		response.put("fileDelimtter", fileDelimtter);
+		return ResponseEntity.accepted().body(response);
+
+	}
+}

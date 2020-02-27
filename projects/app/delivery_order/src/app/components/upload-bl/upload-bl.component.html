@@ -1,0 +1,32 @@
+<form [formGroup]="myForm">
+    <div class="row row-margin">
+        <div class="col-sm-3 offset-sm-4">
+            <app-radio [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'type'" (dataEmitter)="radioChange($event)" [options]="[{label:'BOL',value:1},{label:'INVOICE',value:2}]">
+            </app-radio>
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm-3 offset-sm-4">
+            <fileupload [parentForm]="myForm" [fieldName]="'uploadDoc'" [fb]="formBuilder" [maxFileSizeMb]="fileSize" (dataEmitter)="fileUpload($event)" [dndType]="'true'"> </fileupload>
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <p>
+            <span style="color:red"> Note: Upload Document only of File Type {{allowedFile}} and maximum file size
+        {{fileSize}} MB <br>
+
+      </span>
+            <span style="color:red" *ngIf="clickValue==2"> Invoice file name should be Bol
+        number{{fileDelimtter}}Invoice number.
+      </span>
+        </p>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'Submit'" [buttonName]="'Upload'" (clickEvent)="onSubmit($event)" [icon]="'cloud_upload'"></app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+            <app-button *ngIf="this.flag" [buttonType]="'button'" [buttonName]="'Back'" (clickEvent)="close($event)" [icon]="'arrow_back'"></app-button>
+        </div>
+    </div>
+</form>

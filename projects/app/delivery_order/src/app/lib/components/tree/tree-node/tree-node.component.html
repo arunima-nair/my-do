@@ -1,0 +1,15 @@
+<mat-accordion>
+    <div *ngFor="let s of treeElements;let i=index">
+
+        <ng-container *ngIf="hasChildren(s)">
+            <tree-item [panelCount]="1" [panelText]="s.name" [panelIcon]="s.icon">
+                <tree-node [treeElements]="s.children" [marginLeft]="20"></tree-node>
+            </tree-item>
+        </ng-container>
+        <ng-container *ngIf="!hasChildren(s)">
+            <div class="tree-leaf-node" [style.margin-left.px]="marginleftpx">
+                <mat-icon>{{s.icon}}</mat-icon> <span class="tree-leaf-node-label"> {{s.name}}</span>
+            </div>
+        </ng-container>
+    </div>
+</mat-accordion>

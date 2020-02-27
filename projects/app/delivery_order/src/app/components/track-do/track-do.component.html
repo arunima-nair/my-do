@@ -1,0 +1,14 @@
+<app-auth-details></app-auth-details>
+
+<div class="col-sm button-holder">
+    <!-- <app-button [buttonType]="'button'" *ngIf="((authEncId!=null && authStatus!='COMPLETED')&&(userType == 'I')&& authStatus!='PAYMENT_FAILED'&& authStatus!='PARTIAL_PAYMENT' && authStatus!='PARTIAL_PAYMENT' && authStatus!='REJECTED' && authStatus !='PAYMENT_PENDING'&& authStatus!='CANCELLED' )"
+        [buttonName]="'Cancel DO'" [icon]="'cancel'" (clickEvent)="onRejectReturnCancel('CANCELLED')"></app-button> -->
+    <app-button [buttonType]="'button'" *ngIf="authEncId!=null && authStatus==='COMPLETED'" [buttonName]="'Download DO'" [icon]="'cloud_download'" (clickEvent)="viewDOFile(authEncId)"></app-button>
+    <!-- <app-button [buttonType]="'button'" *ngIf="(authEncId!=null && (payStatus ==='ONLINE_PAYMENT')&& (paidBy===agentCode)&&authStatus!='PARTIAL_PAYMENT')" [buttonName]="'Print Receipt'" (clickEvent)="printReciept()" [icon]="'receipt'"></app-button> -->
+    <app-button [buttonType]="'button'" *ngIf="((authEncId!=null && authStatus==='PENDING_DO')&&(userType == 'A'))" [buttonName]="'Upload DO'" (clickEvent)="doUpload($event)" [icon]="'cloud_upload'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="((authEncId!=null && authStatus==='COMPLETED')&&(userType == 'A'))" [buttonName]="'Reupload DO'" (clickEvent)="doReUpload($event)" [icon]="'cloud_upload'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="((authEncId!=null && authStatus=='COMPLETED' )&&(userType == 'I'))" [buttonName]="'Request for New DO'" (clickEvent)="reqNewDo($event)" [icon]="'fiber_new'"></app-button>
+    <app-button [buttonType]="'button'" *ngIf="authEncId!=null&&(userType == 'I' )&& (authStatus!='COMPLETED'&& authStatus!='PAYMENT_FAILED'&&authStatus!='PAYMENT_PENDING'&&authStatus!='PENDING'&&authStatus!='PARTIAL_PAYMENT'&& authStatus!='REJECTED'&& authStatus!='CANCELLED') "
+        [icon]="'edit'" [buttonName]="'Amend DO'" (clickEvent)="amendDo('')"></app-button>
+    <app-button [buttonType]="'button'" [buttonName]="'Back'" [icon]="'arrow_back'" (clickEvent)="close()"></app-button>
+</div>

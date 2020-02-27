@@ -1,0 +1,209 @@
+
+    <form [formGroup]="myForm" > 
+
+      <div class="row row-margin">
+          <div class="col-sm" >
+                <app-text-input  [parentForm]="myForm" [label]="'First Name'" 
+                [placeHolder]="'First Name'"
+                [fieldName]="'firstName'" [fieldType]="'text'" [validations]="firstNameValidations"
+                [fb]="formBuilder"></app-text-input>
+          </div> 
+          <div class="col-sm">
+                <app-text-input  [parentForm]="myForm" [label]="'Email'" 
+                [placeHolder]="'Email'"
+                [fieldName]="'email'" [fieldType]="'email'" [validations]=""
+                [fb]="formBuilder"></app-text-input>
+           
+          </div>
+      </div>
+     
+     
+      <div class="row row-margin">
+          <div class="col-sm" >
+             <app-select 
+               [fieldName]="'selectItem'" [label]="'Select'" 
+               [items]="selectItems" [parentForm]="myForm" [fb]="formBuilder">
+             </app-select>
+          </div>  
+          <div class="col-sm">
+               
+               <app-date-input  [parentForm]="myForm" [label]="'Date'" 
+                      [placeHolder]="'Enter Date'"
+                      [fieldName]="'dateInput'"  [validations]=""
+                      [fb]="formBuilder"></app-date-input>
+          </div>
+      </div>
+      <div class="row row-margin">
+            <div class="col-sm" >
+                <app-radio [parentForm]="myForm" [fb]="formBuilder" [fieldName]="'gender'"
+                            [label]="'Gender'" [options]="[{label:'Male',value:1},{label:'Female',value:2}]">
+                </app-radio>
+            
+            </div>  
+            <div class="col-sm">
+                <app-auto-complete 
+                [fieldName]="'autoSelectItem2'" [label]="'AutoSelect'" 
+                [items]="items2" [parentForm]="myForm" [fb]="formBuilder" [validations]="autoVals"
+                (outputEvent)="getOutput($event)" [url]="'/api/lov'"> </app-auto-complete>
+            </div>
+            <div class="col-sm">
+               <!-- <app-check-box [parentForm]="myForm" [fb]="formBuilder"
+                            [fieldConfig]="checkBoxConfig">
+               </app-check-box> -->
+               <!-- <app-auto-complete 
+                    [fieldName]="'autoSelectItem'" [label]="'AutoSelect'" 
+                    [items]="items" [parentForm]="myForm" [fb]="formBuilder"
+                    [url]="'/api/lov'">
+             </app-auto-complete> -->
+             <app-auto-complete 
+             [fieldName]="'autoSelectItem'" [label]="'AutoSelect'" 
+             [items]="items" [parentForm]="myForm" [fb]="formBuilder" [validations]="autoVals"
+             (outputEvent)="getOutput($event)" [localSearch]="true" #ac1> </app-auto-complete>
+            </div>
+         
+        </div>
+        <div class="row row-margin">
+                <div class="col-sm" >
+                        <app-select 
+                        [fieldName]="'multiSelectItem'" [label]="'Multi-Select'" 
+                        [items]="selectItems" [parentForm]="myForm" [fb]="formBuilder" 
+                        [multiple]="'true'" >
+                      </app-select>
+                 
+                </div> 
+                <div class="col-sm">
+                 <app-slide [label]="'Please Select'" [formText]="'Yes /No '" [fieldName]="'yn'" [parentForm]="myForm" [fb]="formBuilder" ></app-slide>
+                </div>
+            </div>
+            <div class="row row-margin">
+                <div class="col-sm" >
+                      <app-textarea [parentForm]="myForm" [label]="'main.address'" 
+                      [placeHolder]="'Address'"
+                      [fieldName]="'address'" [fieldType]="'text'" [validations]="firstNameValidations"
+                      [fb]="formBuilder"></app-textarea>
+                </div> 
+                <div class="col-sm">
+                   <fileupload [parentForm]="myForm" [label]="'Passport '" 
+                   [placeHolder]="'Passport'" [maxFileSizeMb]="1" [allowedFileTypes]="['png','txt','pdf']"
+                   [fieldName]="'uploadDoc'" [fb]="formBuilder" 
+                   (dataEmitter)="fileUpload($event)" [dndType]="'true'" [validations]="uploadValidations"></fileupload>
+                    
+                </div>
+               
+            </div>
+            <div class="row row-margin">
+                    <div class="col-sm-3" >
+                         <app-check-box  [parentForm]="myForm"  [fieldName]="'tnc'"
+                         [label]="'Terms & Conditions'" [validations]="checkBoxVals" ></app-check-box>
+                    </div> 
+                    <div class="col-sm-3" >
+                           <info-box [boxType]="1" [icon]="'email'"
+                           [message]="'Inbox'" [value]="'10'"></info-box>
+                       </div> 
+                       <div class="col-sm-3" >
+                            <info-box [boxType]="2" [icon]="'email'" [color]="'blue'"
+                            [message]="'Inbox'" [value]="'10'"></info-box>
+                        </div> 
+                        <div class="col-sm-3" >
+                                <info-box [boxType]="3" [icon]="'email'" [color]="'green'"
+                                [message]="'Inbox'" [value]="'10'"></info-box>
+                            </div> 
+                  
+                   
+                </div>
+            <div class="row row-margin">
+                    <div class="col-sm button-holder">
+                    <app-button [buttonName]="'common.reset'" [icon]="'undo'" (clickEvent)="reset()"></app-button>
+                      <app-button  [clickCount]='clickCount' [buttonType]="'Submit'"  
+                        [buttonName]="'common.submit'" (clickEvent)="onSubmit($event)"></app-button>
+                        <app-button  [buttonType]="'button'"  
+                        [buttonName]="'Table Reload'" (clickEvent)="reloadDataTable($event)"></app-button>
+                      <app-button  [buttonName]="'main.alert'" (clickEvent)="openAlert()"></app-button>
+                      <app-button  [buttonName]="'main.confirm'" (clickEvent)="openConfirm()"></app-button>
+                      <app-button  [buttonName]="'Text Row Data'" (clickEvent)="addRow()"></app-button>
+                      <app-button   [buttonName]="'Add Table Data'" (clickEvent)="addTableRow()"></app-button>
+                      <app-button   [buttonName]="'Init AS'" (clickEvent)="intializeAutoSelect()"></app-button>
+                      
+                    </div>
+            </div> 
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-normal-table [tableDefn]="tableDfn" [delete]="true" 
+                   [tableDS]="tableItems" (clickEvent)="tableAction($event)" ></app-normal-table>
+
+                    <!-- <div class="dt-table-style readonly-table">
+                            <table class="table-bordered mat-elevation-z8">
+                                    <thead>
+                                            <tr class="table-warning">
+                                                    <th>id</th>
+                                                    <th>label</th>
+                                                    <th>value</th>
+                                                    <th>action</th>
+                                            </tr> 
+                                        </thead>
+                                    <tbody>
+                                            <tr *ngFor="let tb of tableItems; let i=index">
+                                                <td>{{tb.id}}</td>
+                                                <td>{{tb.label}}</td>
+                                                <td>{{tb.value}}</td>
+                                                <td>  <mat-icon class="no-border" (click)="deleteTableRow(i)" [color]="'warn'">
+                                                        delete</mat-icon></td>
+                                            </tr>
+                                    </tbody>
+                            </table>
+                    </div> -->
+            </div>
+            </div>
+            <div class="row row-margin">
+               
+                <div class="dt-table-style">
+                    <table class="table-bordered mat-elevation-z8">
+                        <thead>
+                            <tr class="table-warning">
+                                    <th>Name</th>
+                                    <th>body</th>
+                                    <th></th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="tableData">
+                            <tr *ngFor="let tb of tabForms.controls; let i=index" [formGroupName]="i">
+                                <td>
+                                        <app-text-input  [parentForm]="tb" 
+                                        [placeHolder]="'Name'"
+                                        [fieldName]="'firstName'" [fieldType]="'text'" [validations]=""
+                                        [fb]="formBuilder"></app-text-input>
+                                </td>
+                                <td>
+                                        <app-text-input  [parentForm]="tb" 
+                                        [placeHolder]="'Age'"
+                                        [fieldName]="'age'" [fieldType]="'text'" [validations]=""
+                                        [fb]="formBuilder"></app-text-input>
+                                </td>
+                                <td>
+                                     <mat-icon class="no-border" (click)="deleteRow(i)" [color]="'warn'">
+                                            delete</mat-icon>
+                                    <mat-icon class="no-border" (click)="editRowr(i)">create</mat-icon>
+
+                                       
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+                </div>
+            <div class="row row-margin">
+                    <div class="col-sm" >   
+                        <app-data-table (clickEvent)="dataTableClick($event)"
+                         [url]="'/api/employees/dept'" 
+                          [tableDefn]="tableDfn" [pageSize]="7" [actionable]="true" 
+                            [view]="true"  [local]="true">
+                        </app-data-table>
+                    </div>
+
+            </div>
+     
+     
+    </form>
+
+

@@ -1,0 +1,12 @@
+<ng-container *ngIf="!hyperLink">
+
+  <div class="static-label">{{labelTxt}}</div>
+  <div class="static-text">
+    <span>{{this.value}}</span>
+  </div>
+</ng-container>
+<ng-container *ngIf="hyperLink">
+  <div class="static-label">{{labelTxt}}</div>
+  <div class="static-download-link" (click)="clicked($event)"><i class="fas fa-download"></i><span>{{this.value}}</span>
+  </div>
+</ng-container>

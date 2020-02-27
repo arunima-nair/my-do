@@ -1,0 +1,770 @@
+package ae.dt.deliveryorder.service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.servlet.http.HttpServletRequest;
+
+import ae.dt.common.constants.Constants;
+import ae.dt.deliveryorder.domain.*;
+import ae.dt.deliveryorder.dto.*;
+import oracle.jdbc.driver.Const;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import ae.dt.common.domain.DTAgentView;
+import ae.dt.common.dto.DataDto;
+import ae.dt.common.dto.SelectDto;
+import ae.dt.common.dto.UserDTO;
+import ae.dt.common.exception.BusinessException;
+import ae.dt.common.util.EncryptionUtil;
+import ae.dt.common.util.ErrorCodes;
+import ae.dt.common.util.Utilities;
+import ae.dt.deliveryorder.mapper.BoLMapper;
+import ae.dt.deliveryorder.mapper.BolDetailsMapper;
+import ae.dt.deliveryorder.mapper.BolInvoiceMapper;
+import ae.dt.deliveryorder.mapper.DTAgentViewMapper;
+import ae.dt.deliveryorder.mapper.InvoiceTypeMapper;
+import ae.dt.deliveryorder.mapper.PaymentLogMapper;
+import ae.dt.deliveryorder.mapper.RequestBolInvoiceMapper;
+import ae.dt.deliveryorder.repository.AlertNotificationRepository;
+import ae.dt.deliveryorder.repository.BolDetailsRepository;
+import ae.dt.deliveryorder.repository.BolInvoiceRepository;
+import ae.dt.deliveryorder.repository.BolRepository;
+import ae.dt.deliveryorder.repository.ChannelTypeRepository;
+import ae.dt.deliveryorder.repository.DTAgentViewRepository;
+import ae.dt.deliveryorder.repository.InvoiceTypeRepository;
+import ae.dt.deliveryorder.repository.RequestBolInvoiceRepository;
+import ae.dt.deliveryorder.repository.SAInitiatorInvoiceTypeRepository;
+import ae.dt.deliveryorder.repository.SAInitiatorPaymentRepository;
+import ae.dt.deliveryorder.repository.ShippingAgentAttributesRepository;
+import ae.dt.deliveryorder.repository.ShippingAgentRepository;
+import ae.dt.deliveryorder.specification.BillOfLaddingSpecification;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Created by Kamala.Devi on 1/28/2019.
+ */
+@Slf4j
+@Service("billOfLaddingService")
+public class BillOfLaddingServiceImpl implements BillOfLaddingService {
+
+	@Autowired
+	BoLMapper bolMapper;
+	@Autowired
+	BolInvoiceMapper bolInvMapper;
+	@Autowired
+	BolDetailsMapper bolDetailMapper;
+	@Autowired
+	RequestBolInvoiceMapper requestBolInvoiceMapper;
+	@Autowired
+	DTAgentViewMapper dTAgentViewMapper;
+	@Autowired
+	PaymentLogMapper payLogMapper;
+	@Autowired
+	BolRepository bolrepository;
+	@Autowired
+	BolDetailsRepository boldetailrepository;
+	@Autowired
+	BolInvoiceRepository bolInvoiceRepository;
+	@Autowired
+	ChannelTypeRepository channelTypeRepositories;
+	@Autowired
+	RequestBolInvoiceRepository requestBolInvoiceRepository;
+	@Autowired
+	DTAgentViewRepository dTAgentViewRepository;
+	@Autowired
+	AlertNotificationRepository alertNotificationRepository;
+	@Autowired
+	ShippingAgentAttributesRepository shippingAgentAttributesRepository;
+	@Autowired
+	ShippingAgentRepository shippingAgentRepository;
+	@Autowired
+	SAInitiatorInvoiceTypeRepository saInitiatorInvoiceTypeRepository;
+	@Autowired
+	SAInitiatorPaymentRepository saInitiatorPaymentRepository;
+	@Autowired
+	InvoiceTypeRepository invoiceTypeRepositoryRepository;
+	@Autowired
+	InvoiceTypeMapper invoiceTypeMapper;
+	@Autowired
+	MappingService mappingService;
+
+	BillOfLaddingSpecification billOfLaddingSpecification;
+	@Value("${bolfilepath}")
+	private String bolfilepath;
+
+	Logger logger = LoggerFactory.getLogger(BillOfLaddingServiceImpl.class);
+
+	@Override
+	public String getBolStatus(String bol_no) {
+		String status = null;
+		List<String> collect = new ArrayList<String>();
+		List<Bol> bollist = bolrepository.findByBolnumber(bol_no);
+		if (!bollist.equals(null)) {
+			collect = bollist.stream().map(x -> x.getStatus()).collect(Collectors.toList());
+			if (collect != null && collect.size() > 0)
+				status = collect.get(0);
+		} else
+			status = null;
+		return status;
+	}
+
+	@Override
+	public String saveInvoiceDetails(BolInvoice bolInvoice) {
+		try {
+			bolInvoiceRepository.save(bolInvoice);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "UPLOADING FAILED.";
+		}
+		return "INVOICE UPLOADED.";
+	}
+
+	@Override
+	public List<Bol> getBolDetails(String bolno) {
+		List<Bol> bollist = bolrepository.findByBolnumber(bolno);
+		if (bollist != null) {
+			if (bollist.size() > 0) {
+				return bolrepository.findById(bollist.get(0).getBolId());
+			}
+		}
+
+		return null;
+
+	}
+
+	@Override
+	public BolInvoice getBolInvoicebyBolNumber(String invNo, String bolno) {
+		return bolInvoiceRepository.findByInvoiceNumberAndBolBolNumber(invNo, bolno);
+
+	}
+
+	@Override
+	public BoLDTO getBolDetailObject(String bolNo) {
+		Bol bol = new Bol();
+		BoLDTO boldto = new BoLDTO();
+		List<Bol> bollist = bolrepository.findByBolnumber(bolNo);
+		if (bollist != null && bollist.size() > 0) {
+			bol = bollist.stream().findAny().orElse(null);
+			boldto = bolMapper.bolDomaintoDTO(bol);
+			/*
+			 * if(bol.getDoAuthRequests()!=null) { Set<PaymentLogDTO> payLogDTO=
+			 * payLogMapper.paylogDomaintoDTOset(
+			 * bol.getDoAuthRequests().stream().filter(pay->pay.getPaymentLogs()!=null).map(
+			 * pay->pay.getPaymentLogs()).findAny().orElse(null));
+			 * boldto.getDoAuthRequests().stream().map(pay->{pay.setPaymentLogs(payLogDTO);
+			 * return pay;}).collect(Collectors.toSet()); }
+			 */
+		} else
+			boldto = null;
+		return boldto;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ae.dt.deliveryorder.service.BillOfLaddingService#getBolDetails(ae.dt.
+	 * deliveryorder.dto.SearchDTO, org.springframework.data.domain.Pageable,
+	 * ae.dt.common.dto.UserDTO, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Page<Bol> getBolDetails(SearchDTO searchDTO, Pageable pageable, UserDTO userDTO, String sortorder,
+			String sortCol) {
+		return bolrepository.findAll(new BillOfLaddingSpecification().getFilter(searchDTO, userDTO, sortorder, sortCol),
+				pageable);
+
+	}
+
+	@Override
+	public BoLDTO findBolObjByBolnumber(String bolNumber) {
+		return bolMapper.bolDomaintoDTO(bolrepository.findBolObjByBolnumber(bolNumber));
+
+	}
+
+	@Override
+	public String saveRequestBoLInvoice(String id, String agentCode, UserDTO userDTO, String type, String agentType) {
+		if (type.equalsIgnoreCase("BOL_REQUEST")) {
+			RequestBolInvoice savedrequestBol = requestBolInvoiceRepository.findByBolNoAndShippingCode(id, agentCode);
+			if (savedrequestBol == null) {
+				List<String> subIds = new ArrayList<>();
+				subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+				subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+				List<DTAgentView> agentViewSA = dTAgentViewRepository
+						.findDistinctFirst10ByAgentCodeContainingIgnoreCaseAndBusinessSubIdIn(agentCode, subIds);
+				if (agentViewSA != null) {
+					if (agentViewSA.size() > 0) {
+						String agentName = agentViewSA != null ? agentViewSA.get(0).getAgentName() : agentCode;
+						DTAgentView agentViewInitiator = dTAgentViewRepository
+								.findByAgentCodeIgnoreCaseAndBusinessSubId(userDTO.getAgentCode(),
+										userDTO.getAgentType());
+						String initiatorName = agentViewInitiator != null ? agentViewInitiator.getAgentName()
+								: agentCode;
+						RequestBolInvoice savingrequestBolInvoice = requestBolInvoiceRepository.save(
+								new RequestBolInvoice().builder().bolNo(id).shippingCode(agentCode).status("NOTIFIED")
+										.shippingName(agentName).shippingType(agentViewSA.get(0).getBusinessSubId())
+										.reqType(Constants.REQUEST_BOL_INVOICE_TYPE.BOL_REQUEST.value)
+										.createdBy(userDTO.getUserName()).createdDate(new Date())
+										.initiatorCode(initiatorName).build());
+
+						if (savingrequestBolInvoice != null)
+							return "Bol Requested.";
+						else
+							throw new BusinessException(ErrorCodes.INVALID_BOL_REQUEST);
+
+					}
+
+				}
+			} else {
+				throw new BusinessException(ErrorCodes.BOL_REQUESTED_ALREADY);
+			}
+		} else {
+			RequestBolInvoice savedrequestInvoice = requestBolInvoiceRepository.findByBolInvoiceNoAndShippingCode(id,
+					agentCode);
+			if (savedrequestInvoice == null) {
+				List<String> subIds = new ArrayList<>();
+				subIds.add(Constants.AGENT_TYPE.FRIEGHT_FORWARDER.value);
+				subIds.add(Constants.AGENT_TYPE.SHIPPING_AGENT.value);
+				List<DTAgentView> agentViewSA = dTAgentViewRepository
+						.findDistinctFirst10ByAgentCodeContainingIgnoreCaseAndBusinessSubIdIn(agentCode, subIds);
+				if (agentViewSA != null) {
+					if (agentViewSA.size() > 0) {
+						String agentName = agentViewSA != null ? agentViewSA.get(0).getAgentName() : agentCode;
+						DTAgentView agentViewInitiator = dTAgentViewRepository
+								.findByAgentCodeIgnoreCaseAndBusinessSubId(userDTO.getAgentCode(),
+										userDTO.getAgentType());
+						String initiatorName = agentViewInitiator != null ? agentViewInitiator.getAgentName()
+								: agentCode;
+						RequestBolInvoice savingrequestBolInvoice = requestBolInvoiceRepository
+								.save(new RequestBolInvoice().builder().bolInvoiceNo(id).shippingCode(agentCode)
+										.status("NOTIFIED").shippingName(agentName)
+										.shippingType(agentViewSA.get(0).getBusinessSubId())
+										.reqType(Constants.REQUEST_BOL_INVOICE_TYPE.INVOICE_REQUEST.value)
+										.createdBy(userDTO.getUserName()).createdDate(new Date())
+										.initiatorCode(initiatorName).build());
+
+						if (savingrequestBolInvoice != null)
+							return "Invoice Requested.";
+						else
+							throw new BusinessException(ErrorCodes.INVALID_INVOICE_REQUEST);
+					}
+				}
+
+			} else {
+				throw new BusinessException(ErrorCodes.INVOICE_REQUESTED_ALREADY);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public BolInvoiceDTO findByInvoiceNumber(String invNumber) {
+		return bolInvMapper.bolinvoiceDomaintoDTO(bolInvoiceRepository.findByInvoiceNumber(invNumber));
+	}
+
+	@Override
+	public List<BoLDTO> getBLdetails(String bolNo, String agentType) {
+		List<BoLDTO> bollist = null;
+		List<Bol> bolList = bolrepository
+				.findAll(new BillOfLaddingSpecification().bolNumberContains(bolNo, "undefined", "bolNumber"));
+		if (bolList != null && bolList.size() > 0) {
+			Bol bol = bolList.stream().findAny().orElse(null);
+			List<Bol> listBol = new ArrayList();
+			BolDetail bolDetail = bol.getBolDetails().stream().findAny().orElse(null);
+			List<SAInitiatorInvoiceType> impInvType = null;
+			for (Constants.APPROVER approver : Constants.APPROVER.values()) {
+				if (StringUtils.equalsIgnoreCase(approver.value, agentType)) {
+					impInvType = saInitiatorInvoiceTypeRepository
+							.findByIsActiveAndShippingAgentShippingAgentCodeAndIsActive(Constants.ACTIVE_VAL,
+									bolDetail.getShippingAgentCode(), Constants.ACTIVE_VAL);
+
+					break;
+				}
+			}
+			for (Constants.INITIATOR initiator : Constants.INITIATOR.values()) {
+				if (StringUtils.equalsIgnoreCase(initiator.value, agentType)) {
+					impInvType = saInitiatorInvoiceTypeRepository
+							.findByIsActiveAndShippingAgentShippingAgentCodeAndIsActiveAndInitiatorInitiatorTypeAndIsValid(
+									Constants.ACTIVE_VAL, bolDetail.getShippingAgentCode(), Constants.ACTIVE_VAL,
+									agentType, Constants.ACTIVE_VAL);
+
+					break;
+				}
+			}
+
+			Set<BolInvoice> bolInv = new HashSet();
+			if (impInvType != null) {
+				for (SAInitiatorInvoiceType impInv : impInvType) {
+					Long invType = impInv.getInvoiceType().getInvoiceTypeId();
+
+					bolInv.addAll(bolInvoiceRepository.findByBolBolNumberAndInvoiceTypeInvoiceTypeId(bolNo, invType));
+				}
+
+				bol.setBolInvoices(bolInv);
+			}
+			listBol.add(bol);
+
+			bollist = bolMapper.bolDomaintoDTO(listBol);
+			Set<BolInvoiceDTO> bolInvDTOSet = bolMapper.bolDomaintoDTO(bolInv);
+
+			for (BolInvoice bolINV : bolInv) {
+				for (BolInvoiceDTO invdto : bolInvDTOSet) {
+					if ((invdto.getInvoiceNumber() == bolINV.getInvoiceNumber())) {
+						invdto.setInvoiceType(invoiceTypeMapper.invoiceTypeDomaintoDTO(bolINV.getInvoiceType()));
+						System.out.println(
+								invdto.getInvoiceNumber() + "   " + invdto.getInvoiceType().getInvoiceTypeId());
+						continue;
+					}
+				}
+			}
+
+			bollist.stream().map(boldto -> {
+				boldto.setBolInvoices(bolInvDTOSet);
+				return boldto;
+			}).collect(Collectors.toSet());
+
+		}
+		return bollist;
+	}
+
+	public Set<DTAgentView> getAgentDetails(String searchParam, List<String> subIds) {
+		Set<DTAgentView> agentCodeSet = new HashSet<DTAgentView>();
+
+		Set<DTAgentView> agentNameSet = new HashSet<DTAgentView>();
+
+		List<DTAgentView> agentCodeList = dTAgentViewRepository
+				.findDistinctFirst10ByAgentCodeContainingIgnoreCaseAndBusinessSubIdIn(searchParam, subIds);
+		if (null != agentCodeList) {
+			agentCodeSet = agentCodeList.stream().collect(Collectors.toSet());
+		}
+		List<DTAgentView> agentNameList = dTAgentViewRepository
+				.findDistinctFirst10ByAgentNameContainingIgnoreCaseAndBusinessSubIdIn(searchParam, subIds);
+		if (null != agentNameList) {
+			agentNameSet = agentNameList.stream().collect(Collectors.toSet());
+		}
+		return Stream.concat(agentCodeSet.stream(), agentNameSet.stream()).collect(Collectors.toSet());
+	}
+
+	public DTAgentView getRequestingAgentDetail(String searchParam, List<String> subIds) {
+		DTAgentView agentView = dTAgentViewRepository.findByAgentCodeIgnoreCaseAndBusinessSubId(searchParam,
+				subIds.get(0));
+		return agentView;
+	}
+
+	@Override
+	public String alertnotify(String bolNos, String emails, UserDTO userDTO) {
+		String msg = "";
+		StringTokenizer boltokenizer = new StringTokenizer(bolNos, ",");
+		ArrayList<String> bolEnabled = new ArrayList<String>();
+		ArrayList<String> bolAlready = new ArrayList<String>();
+		while (boltokenizer.hasMoreTokens()) {
+			String bolNo = boltokenizer.nextToken();
+			StringTokenizer emailtokenizer = new StringTokenizer(emails, ",");
+
+			while (emailtokenizer.hasMoreTokens()) {
+
+				String email = emailtokenizer.nextToken();
+				Bol bol = bolrepository.findBolObjByBolnumber(bolNo);
+				AlertNotification alertNotification = alertNotificationRepository.findByBolIdAndEmailId(bolNo, email);
+				String status = "NEW";
+				if (bol != null) {
+					status = "NOTIFIED";
+				}
+				if (alertNotification == null) {
+
+					alertNotificationRepository.save(new AlertNotification().builder().bolId(bolNo).emailId(email)
+							.status(status).createdBy(userDTO.getUserName()).createdDate(new Date()).build());
+					// msg=msg+" "+bolNo+" Alert and Notification enabled!!";
+					if (!bolEnabled.contains(bolNo))
+						bolEnabled.add(bolNo);
+				} else {
+					// msg=msg+" "+bolNo+"Alert and Notification already enabled!!";
+					if (!bolAlready.contains(bolNo))
+						bolAlready.add(bolNo);
+
+				}
+			}
+
+		}
+		if (!bolEnabled.isEmpty()) {
+			msg = " Alert and Notification enabled for " + bolEnabled.toString();
+		}
+		if (!bolAlready.isEmpty()) {
+			msg = msg + " Alert and Notification already enabled for " + bolAlready.toString();
+		}
+		return msg;
+	}
+
+	@Override
+	public BolInvoice getInvoiceDetails(String invNo) {
+		return bolInvoiceRepository.findByInvoiceNumber(invNo);
+	}
+
+	@Override
+	public List getShippingAgentSearchAttribute(String agentCode) {
+		ShippingAgent shippingAgent = shippingAgentRepository.findByShippingAgentCodeAndIsActive(agentCode, (long) 1);
+
+		return shippingAgentAttributesRepository.findByShippingAgentAndIsActive(shippingAgent, (long) 1);
+		// return attributeList;
+	}
+
+	@Override
+	public ShippingAgent getShippingAgent(String agentCode) {
+		return shippingAgentRepository.findByShippingAgentCodeAndIsActive(agentCode, (long) 1);
+	}
+
+	@Override
+	public Date getInvoiceExpiryDate(String invoiceNumber, String bolNumber) {
+
+		return bolInvoiceRepository.findByInvoiceNumberAndBolBolNumber(invoiceNumber, bolNumber)
+				.getInvoiceValidityDate();
+	}
+
+	@Override
+	public List<SAInitiatorPayment> getSAInitiatorPartialPayment(String agentCode, String impType) {
+		List<SAInitiatorPayment> listPartialPayment = new ArrayList<SAInitiatorPayment>(
+				Arrays.asList(saInitiatorPaymentRepository
+						.findPaymentAllowedByShippingAgentShippingAgentCodeAndInitiatorInitiatorType(agentCode,
+								impType)));
+		return listPartialPayment;
+	}
+
+	@Override
+	public void saveBoL(Bol bol) {
+		bolrepository.save(bol);
+
+	}
+
+	@Override
+	public List<InvoiceTypeDTO> getInvoiceTypes() {
+		Iterable<InvoiceType> invType = invoiceTypeRepositoryRepository.findAll();
+		List<InvoiceTypeDTO> target = new ArrayList<>();
+		invType.forEach(source -> {
+			target.add(invoiceTypeMapper.invoiceTypeDomaintoDTO(source));
+		});
+
+		return target;
+	}
+
+	@Override
+	public List<BolInvoice> getInvoicesUploaded(String bolNo) {
+
+		return bolInvoiceRepository.findByBolBolNumber(bolNo);
+
+	}
+
+	@Override
+	public String uploadBolFile(String uploadDoc, String fileName, HttpServletRequest httpServletRequest)
+			throws IOException {
+		String result = "BOL Uploading Failed.";
+		UserDTO userDTO = (UserDTO) httpServletRequest.getAttribute("userName");
+		String[] parts = uploadDoc.split("base64,");
+		if (uploadDoc.length() > 0)
+			uploadDoc = parts[1];
+
+		boolean save = false;
+		/* decode base64 */
+		// byte[] bs = Utilities.decodeBase64(uploadDoc);
+		// String fileExtn = Utilities.getFileExtn(bs);
+
+		String path = Utilities.putBOLtoFolder(uploadDoc, bolfilepath, userDTO.getAgentCode(), fileName);
+		if (path != null)
+			result = "BOL Uploaded.";
+
+		return result;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public DTAgentView getAgentDetailByAgentCodeAndBusinessGroupId(String agentCode, String businessSubId) {
+		return dTAgentViewRepository.findByAgentCodeIgnoreCaseAndBusinessSubId(agentCode, businessSubId);
+
+	}
+
+	@Override
+	public List<BoLDTO> getBLdetails(String bolNo) {
+		List<BoLDTO> bollist = null;
+		List<Bol> bolList = bolrepository
+				.findAll(new BillOfLaddingSpecification().bolNumberContains(bolNo, "undefined", "bolNumber"));
+		if (bolList != null && bolList.size() > 0) {
+			Bol bol = bolList.stream().findAny().orElse(null);
+			List<Bol> listBol = new ArrayList();
+			BolDetail bolDetail = bol.getBolDetails().stream().findAny().orElse(null);
+
+			Set<BolInvoice> bolInv = new HashSet();
+			bolInv.addAll(bolInvoiceRepository.findByBolBolNumber(bolNo));
+			bol.setBolInvoices(bolInv);
+			listBol.add(bol);
+
+			bollist = bolMapper.bolDomaintoDTO(listBol);
+			Set<BolInvoiceDTO> bolInvDTOSet = bolMapper.bolDomaintoDTO(bolInv);
+
+			for (BolInvoice bolINV : bolInv) {
+				for (BolInvoiceDTO invdto : bolInvDTOSet) {
+					if ((invdto.getInvoiceNumber() == bolINV.getInvoiceNumber())) {
+						invdto.setInvoiceType(invoiceTypeMapper.invoiceTypeDomaintoDTO(bolINV.getInvoiceType()));
+						System.out.println(
+								invdto.getInvoiceNumber() + "   " + invdto.getInvoiceType().getInvoiceTypeId());
+						continue;
+					}
+				}
+			}
+
+			bollist.stream().map(boldto -> {
+				boldto.setBolInvoices(bolInvDTOSet);
+				return boldto;
+			}).collect(Collectors.toSet());
+
+		}
+		return bollist;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ae.dt.deliveryorder.service.BillOfLaddingService#checkInvoice(java.lang.
+	 * String, java.lang.String)
+	 */
+	@Override
+	public Boolean checkInvoice(String invoiceNumber, String bolNumber) {
+		BolInvoice bolInvoice = bolInvoiceRepository.findByInvoiceNumberAndBolBolNumber(invoiceNumber,
+				StringUtils.capitalize(bolNumber));
+		if (bolInvoice != null)
+			return false;
+		else
+			return true;
+	}
+
+	@Override
+	public List<BoLDTO> getBLdetailsNew(String bolNo, String agentType) {
+		List<BoLDTO> bolDtoList = null;
+		Set<DoAuthRequestDTO> authRequestDTOsList = new HashSet<DoAuthRequestDTO>();
+		Set<DoAuthDocDTO> authDocDTOList = new HashSet<DoAuthDocDTO>();
+		List<Bol> bolList = bolrepository
+				.findAll(new BillOfLaddingSpecification().bolNumberContains(bolNo, "undefined", "bolNumber"));
+		if (bolList != null && bolList.size() > 0) {
+			Bol bol = bolList.stream().findAny().orElse(null);
+			List<Bol> listBol = new ArrayList();
+			BolDetail bolDetail = bol.getBolDetails().stream().findAny().orElse(null);
+			List<SAInitiatorInvoiceType> impInvType = null;
+			for (Constants.APPROVER approver : Constants.APPROVER.values()) {
+				if (StringUtils.equalsIgnoreCase(approver.value, agentType)) {
+					impInvType = saInitiatorInvoiceTypeRepository
+							.findByIsActiveAndShippingAgentShippingAgentCodeAndIsActive(Constants.ACTIVE_VAL,
+									bolDetail.getShippingAgentCode(), Constants.ACTIVE_VAL);
+
+					break;
+				}
+			}
+			for (Constants.INITIATOR initiator : Constants.INITIATOR.values()) {
+				if (StringUtils.equalsIgnoreCase(initiator.value, agentType)) {
+					impInvType = saInitiatorInvoiceTypeRepository
+							.findByIsActiveAndShippingAgentShippingAgentCodeAndIsActiveAndInitiatorInitiatorTypeAndIsValid(
+									Constants.ACTIVE_VAL, bolDetail.getShippingAgentCode(), Constants.ACTIVE_VAL,
+									agentType, Constants.ACTIVE_VAL);
+
+					break;
+				}
+			}
+
+			// Set the Static Mapping
+			if (bol.getDoAuthRequests() != null) {
+				if (!bol.getStatus().equalsIgnoreCase(Constants.BOL_STATUS.REJECTED.value)) {
+					for (DoAuthRequest doAuthRequestEntity : bol.getDoAuthRequests()) {
+						DoAuthRequestDTO doAuthRequestDTO = new DoAuthRequestDTO();
+						doAuthRequestDTO.setDoAuthRequestIdEncr(
+								EncryptionUtil.encrypt(String.valueOf(doAuthRequestEntity.getDoAuthRequestId())));
+						doAuthRequestDTO.setReqContactPerson(doAuthRequestEntity.getReqContactPerson());
+						doAuthRequestDTO.setReqEmail(doAuthRequestEntity.getReqEmail());
+						doAuthRequestDTO.setReqContactNumber(doAuthRequestEntity.getReqContactNumber());
+						doAuthRequestDTO.setReqPartyName(doAuthRequestEntity.getReqPartyName());
+
+						doAuthRequestDTO.setBolContactPerson(doAuthRequestEntity.getBolContactPerson());
+						doAuthRequestDTO.setBolEmail(doAuthRequestEntity.getBolEmail());
+						doAuthRequestDTO.setBolContactNumber(doAuthRequestEntity.getBolContactNumber());
+						doAuthRequestDTO.setBolPartyName(doAuthRequestEntity.getBolPartyName());
+
+						doAuthRequestDTO.setDoContactPerson(doAuthRequestEntity.getDoContactPerson());
+						doAuthRequestDTO.setDoEmail(doAuthRequestEntity.getDoEmail());
+						doAuthRequestDTO.setDoContactNumber(doAuthRequestEntity.getDoContactNumber());
+						doAuthRequestDTO.setDoPartyName(doAuthRequestEntity.getDoPartyName());
+						doAuthRequestDTO.setCreatedDate(doAuthRequestEntity.getCreatedDate());
+						doAuthRequestDTO.setStatus(doAuthRequestEntity.getStatus());
+						
+						doAuthRequestDTO.setBlPartyCode(doAuthRequestEntity.getBlPartyCode());
+						doAuthRequestDTO.setBlPartyType(doAuthRequestEntity.getBlPartyType());
+						doAuthRequestDTO.setDoPartyCode(doAuthRequestEntity.getDoPartyCode());
+						doAuthRequestDTO.setDoPartyType(doAuthRequestEntity.getDoPartyType());
+
+						// SET DO_AUTH_Documents DTO
+						if (doAuthRequestEntity.getDoAuthDocs() != null) {
+							for (DoAuthDoc doauAuthDoc : doAuthRequestEntity.getDoAuthDocs()) {
+								DoAuthDocDTO authDocoumentDto = new DoAuthDocDTO();
+								DocumentDTO documentDTO = new DocumentDTO();
+								Document document = doauAuthDoc.getDocumentBean();
+								authDocoumentDto
+										.setEncrDocumentPath(EncryptionUtil.encrypt(doauAuthDoc.getDocumentPath()));
+								// authDocoumentDto.setDoAuthDocsId(doauAuthDoc.getDoAuthDocsId());
+								authDocoumentDto.setEncrDoAuthDocsId(
+										EncryptionUtil.encrypt(String.valueOf(doauAuthDoc.getDoAuthDocsId())));
+								// documentDTO.setDocumentId(document.getDocumentId());
+								documentDTO.setDocumentValue(document.getDocumentValue());
+								authDocoumentDto.setDocumentBean(documentDTO);
+								// authDocoumentDto.setDocumentBean(document);
+								authDocDTOList.add(authDocoumentDto);
+							}
+							doAuthRequestDTO.setDoAuthDocs(authDocDTOList);
+						}
+						if (!doAuthRequestEntity.getApprovalLog().isEmpty()) {
+							ApprovalLog approvalLog = doAuthRequestEntity.getApprovalLog().iterator().next();
+							ApprovalLogDTO approvalLogDTO = new ApprovalLogDTO();
+							approvalLogDTO.setComments(approvalLog.getComments());
+							if (approvalLog.getRejectionRemark() != null) {
+								RejectionRemarksDTO rejectionRemarksDTO = new RejectionRemarksDTO();
+								rejectionRemarksDTO.setRemarks(approvalLog.getRejectionRemark().getRemarks());
+								approvalLogDTO.setRejectionRemark(rejectionRemarksDTO);
+							}
+							if (approvalLog.getReturnRemark() != null) {
+								ReturnRemarksDTO returnRemarksDTO = new ReturnRemarksDTO();
+								returnRemarksDTO.setRemarks(approvalLog.getReturnRemark().getRemarks());
+								approvalLogDTO.setReturnRemark(returnRemarksDTO);
+							}
+							doAuthRequestDTO.setApprovalLog(new HashSet<ApprovalLogDTO>(Arrays.asList(approvalLogDTO)));
+						}
+						authRequestDTOsList.add(doAuthRequestDTO);
+					}
+				}
+			}
+
+			Set<BolInvoice> bolInv = new HashSet();
+			if (impInvType != null) {
+				for (SAInitiatorInvoiceType impInv : impInvType) {
+					Long invType = impInv.getInvoiceType().getInvoiceTypeId();
+					bolInv.addAll(bolInvoiceRepository.findByBolBolNumberAndInvoiceTypeInvoiceTypeId(bolNo, invType));
+				}
+				bol.setBolInvoices(bolInv);
+			}
+			listBol.add(bol);
+
+			// bolDtoList = bolMapper.bolDomaintoDTO(listBol);
+			bolDtoList = mappingService.bolDomaintoDTO(listBol);
+			// Set<BolInvoiceDTO> bolInvDTOSet = bolMapper.bolDomaintoDTO(bolInv);
+			Set<BolInvoiceDTO> bolInvDTOSet = mappingService.bolInvoiceDTOSet(bolInv);
+
+			for (BolInvoice bolINV : bolInv) {
+				for (BolInvoiceDTO invdto : bolInvDTOSet) {
+					if ((invdto.getInvoiceNumber() == bolINV.getInvoiceNumber())) {
+						// invdto.setInvoiceType(invoiceTypeMapper.invoiceTypeDomaintoDTO(bolINV.getInvoiceType()));
+						invdto.setInvoiceType(mappingService.invoiceTypeDomaintoDTO(bolINV.getInvoiceType()));
+						System.out.println(
+								invdto.getInvoiceNumber() + "   " + invdto.getInvoiceType().getInvoiceTypeId());
+						continue;
+					}
+				}
+			}
+
+			bolDtoList.stream().map(boldto -> {
+				boldto.setBolInvoices(bolInvDTOSet);
+				boldto.setDoAuthRequests(authRequestDTOsList);
+				return boldto;
+			}).collect(Collectors.toSet());
+
+		}
+		return bolDtoList;
+	}
+
+	@Override
+	public Boolean deleteBol(String bolNo, UserDTO userDTO) {
+		Bol bol = bolrepository.findBolByBolNumber(bolNo);
+		bol.setStatus(Constants.BOL_STATUS.DELETED.value);
+		bol.setModifiedBy(userDTO.getUserName());
+		bol.setModifiedDate(new Date());
+		bol.setIsActive((long) 0);
+		bol.getBolInvoices().stream().map(bolInvoice -> {
+			bolInvoice.setStatus(Constants.BOLINVOICE_STATUS.DELETED.value);
+			bolInvoice.setIsActive((long) 0);
+			bolInvoice.setModifiedBy(userDTO.getUserName());
+			bolInvoice.setModifiedDate(new Date());
+			return bolInvoice;
+		}).collect(Collectors.toSet());
+		Bol savedBol = bolrepository.save(bol);
+		if (savedBol != null)
+			return true;
+		else
+			return false;
+
+	}
+
+	@Override
+	public BoLDTO saveBolVersion(String bolNo, UserDTO userDTO) {
+		Bol getBolVersion = bolrepository.findBolByBolNumber(bolNo);
+		getBolVersion.setVersion(getBolVersion.getVersion() + 1);
+		getBolVersion.setModifiedBy(userDTO.getUserName());
+		getBolVersion.setModifiedDate(new Date());
+		Bol savedNewVersionBol = bolrepository.save(getBolVersion);
+		BoLDTO bolDto = new BoLDTO();
+		bolDto.setVersion(savedNewVersionBol.getVersion());
+		return bolDto;
+	}
+
+	@Override
+	public Long getBolVersion(String bolNo) {
+		return bolrepository.findBolByBolNumber(bolNo).getVersion();
+	}
+
+	@Override
+	public String getSAinvoiceDelimitter(UserDTO userDTO) {
+		List<ShippingAgentAttributes> saInvoiceDelimiterAttribute = shippingAgentAttributesRepository
+				.findShippingAgentAttributesByAttributeNameAndIsActiveAndShippingAgentShippingAgentCode(
+						Constants.INVOICE_FILE_DELIMITER, 1L, userDTO.getAgentCode());
+		if (saInvoiceDelimiterAttribute != null) {
+			if (saInvoiceDelimiterAttribute.size() > 0)
+				return saInvoiceDelimiterAttribute.get(0).getAttributeValue();
+			else
+				return "_";
+		}
+		return "_";
+	}
+
+	@Override
+	public Page<RequestBolInvoice> searchReqBLInvoicedetails(SearchDTO searchDTO, Pageable pageable, UserDTO userDTO,
+			String sortorder, String sortCol) {
+		return requestBolInvoiceRepository.findAll(
+				new BillOfLaddingSpecification().getFilterReqBolInv(searchDTO, userDTO, sortorder, sortCol), pageable);
+
+	}
+
+	@Override
+	public String getShippingAgentEmailId(String agentCode) {
+		ShippingAgent shippingAgent = shippingAgentRepository.findByShippingAgentCodeAndIsActive(agentCode, (long) 1);
+		if (shippingAgent != null) {
+			List<ShippingAgentAttributes> shippingAgentAttributes = shippingAgentAttributesRepository
+					.findShippingAgentAttributesByAttributeNameAndIsActiveAndShippingAgentShippingAgentCode("EMAILS",
+							(long) 1, agentCode);
+			if (shippingAgentAttributes.size() > 0) {
+				return shippingAgentAttributes.iterator().next().getAttributeValue();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Bol findBolByBolNumber(String bolNumber) {
+		return bolrepository.findBolByBolNumber(bolNumber);
+	}
+}

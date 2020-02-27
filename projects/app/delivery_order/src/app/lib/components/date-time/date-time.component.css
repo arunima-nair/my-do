@@ -1,0 +1,26 @@
+.mat-date-time-input{
+    display: inline-block;
+    width: 40%;
+}
+
+.date-class{
+    width: 40%;
+}
+
+.hh-class{
+    width: 25%;
+}
+.mm-class{
+    width: 25%;
+}
+
+.hidden-form-field{
+    width:0%;
+    height: 0%;
+}
+
+.time-spacer{
+    margin-right: 10px;
+    font-weight: bold;
+    color: green;
+}

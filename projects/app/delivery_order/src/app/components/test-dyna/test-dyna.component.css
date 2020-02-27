@@ -1,0 +1,35 @@
+.div-table {
+    display: table;
+    width: 100%;
+    border-style: solid;
+    border-width: thin;
+    text-align: center;
+    box-shadow: -1px 9px 2px 6px #d4d4cb;
+    margin:5px;
+    border-collapse: collapse;
+}
+
+.table-row {
+    display: table-row;
+}
+
+.table-column {
+    display: table-cell;
+    padding: 5px;
+    border:1px solid #dee2e6;
+}
+
+.table-head.table-row {
+    background-color: #ffeeba;
+    font-weight: bold;
+}
+
+.table-head {
+    border-bottom-style: solid;
+    border-bottom-width: 0.2px;
+   
+}
+
+.table-head .table-column {
+    padding: 15px;
+}

@@ -1,0 +1,67 @@
+<div [formGroup]='monitorForm'>
+    <!-- First Row -->
+    <div class="row row-margin">
+        <!-- Shipping Agent Name -->
+        <div class="col-sm" *ngIf="userType === 'I'">
+            <app-auto-complete [fieldName]="'shippingAgentName'" [label]="'Agent Name'" [items]="items" [parentForm]="monitorForm" [fb]="formBuilder" [validations]="saValidation" [url]="'/do/app/api/secure/getShippingAgentDetails'" (outputEvent)="onChangeSA($event)">
+            </app-auto-complete>
+        </div>
+        <div class="col-sm" *ngIf="userType==='A'">
+            <!-- <i class="fa fa-calendar prefix"></i> -->
+            <label for="shippingAgentName" class="active">Agent Name</label>
+            <p id="" name="shippingAgentName">{{shippingAgent}}</p>
+        </div>
+        <!-- Reference Number -->
+        <div class="col-sm">
+            <app-text-input [parentForm]="monitorForm" [label]="'monitor.referenceNumber'" [placeHolder]="'Reference Number'" [fieldName]="'referenceNumber'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+        </div>
+        <!-- BOL No -->
+        <div class="col-sm">
+            <app-text-input [parentForm]="monitorForm" [label]="'monitor.bolNo'" [placeHolder]="'BOL Number'" [fieldName]="'bolNo'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row row-margin">
+        <!-- Invoice Number -->
+        <div class="col-sm">
+            <app-text-input [parentForm]="monitorForm" [label]="'monitor.invoiceNumber'" [placeHolder]="'Invoice Number'" [fieldName]="'invoiceNumber'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+        </div>
+        <!-- From Date -->
+        <div class="col-sm">
+            <app-date-input [fieldName]="'fromDate'" [label]="'monitor.fromDate'" [parentForm]="monitorForm" [placeHolder]="'From Date'" [fb]="formBuilder" [maxDate]="maxDate" (clickEvent)="onChange()">
+            </app-date-input>
+        </div>
+        <!-- To Date -->
+        <div class="col-sm">
+            <app-date-input [fieldName]="'toDate'" [label]="'monitor.toDate'" [parentForm]="monitorForm" [placeHolder]="'To Date'" [fb]="formBuilder" [maxDate]="maxDate" [minDate]="minDate">
+            </app-date-input>
+        </div>
+    </div>
+
+    <!-- Third Row -->
+    <div class="row row-margin">
+        <!-- Status -->
+        <!-- <div class="col-sm">
+            <app-select [fieldName]="'status'" [label]="'monitor.status'" [items]="statusItems" [parentForm]="monitorForm" [fb]="formBuilder">
+            </app-select>
+        </div> 
+        <div class="col-sm"></div>-->
+        <!-- Filter Buttons -->
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'Submit'" [buttonName]="'Search'" (clickEvent)="reloadDataTable($event)" [icon]="'search'"></app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+            <app-button *ngIf="flag" [buttonType]="'button'" [buttonName]="'Back'" [icon]="'arrow_back'" (clickEvent)="close($event)"></app-button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-data-table [url]="'/do/app/api/secure/getLogsDetail'" [tableDefn]="tableDfn" (clickEvent)="editFL($event)" [pageSize]="10" [edit]="true" [editTip]="'Show the Pop UP'" [actionable]="true">
+            </app-data-table>
+            <!-- <span class="fa-pull-right" style="color:#9b9b9b">Search Not Working Properly</span> -->
+        </div>
+
+    </div>
+</div>

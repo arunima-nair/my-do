@@ -1,0 +1,25 @@
+.static-download-link span{
+    margin-left:10px;
+}
+.static-download-link{
+    cursor: pointer;
+}
+.static-download-link-label{
+    color: rgba(0, 0, 0, 0.54);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.static-field{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.static-label{
+    color:rgb(0, 0, 0);
+    font-weight:500;
+}
+
+.static-text{
+    min-height: 44px;
+}

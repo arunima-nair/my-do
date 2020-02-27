@@ -1,0 +1,45 @@
+.confirm-page {
+    position: relative;
+    margin-top: 50px;
+}
+
+.color-green {
+    color: green;
+}
+
+.color-red {
+    color: red;
+}
+
+.success-icon {
+    position: absolute;
+    top: -40px;
+    font-size: 80px;
+    margin-left: 47%;
+    z-index: 20;
+}
+
+.success-icon {
+    font-size: 80px !important;
+}
+
+.confirm-content {
+    margin-top: 50px !important;
+}
+
+.confirm-head {
+    text-align: center;
+    padding-top: 30px;
+}
+
+.confirm-header-text {
+    margin-bottom: .5rem;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    font-size: 2.5rem;
+}
+
+.multi_lines_text {
+    white-space: pre-line;
+}

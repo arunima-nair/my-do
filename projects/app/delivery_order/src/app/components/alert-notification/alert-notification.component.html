@@ -1,0 +1,31 @@
+
+    <form [formGroup]="myForm">
+
+      <div class="row row-margin">
+
+           <div class="col-sm">
+               <app-text-input [parentForm]="myForm" [label]="'Bol Numbers'" [placeHolder]="'Comma seperated BOL Number'"
+                   [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+           </div>
+           <div class="col-sm">
+               <app-text-input [parentForm]="myForm" [label]="'Email ID'"
+                   [placeHolder]="'Comma seperated EmailID'" [fieldName]="'email'" [fieldType]="'text'"[prefixIcon]="'email'"
+                   [validations]="" [fb]="formBuilder"></app-text-input>
+
+           </div>
+       </div>
+
+
+       <div class="row row-margin">
+           <div class="col-sm button-holder">
+               <app-button [buttonType]="'Submit'" [buttonName]="'Alert'" (clickEvent)="submitAlert()"[icon]="'notifications_active'">
+               </app-button>
+               <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset()"></app-button>
+
+           </div>
+       </div>
+ 
+
+ 
+</form>

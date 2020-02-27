@@ -1,0 +1,124 @@
+<form [formGroup]="form">
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Details'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <static-field [value]="bol.bolNumber" [label]="'B/L Number'"></static-field><br>
+                <app-text-input [fieldName]="'importerCode'" [label]="'amendBL.importerCode'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input>
+                <app-text-input [fieldName]="'consigneeName'" [label]="'amendBL.consigneeName'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input>
+                <app-date-input [fieldName]="'vesselEta'" [label]="'amendBL.vesselEta'" [parentForm]="form" [fb]="formBuilder">
+                </app-date-input>
+            </div>
+            <div class="col-sm">
+                <static-field [value]="bol.bolDetails.shippingAgentCode" [label]="'Shipping Agent Code'"></static-field><br>
+                <app-text-input [fieldName]="'voyageNumber'" [label]="'amendBL.voyageNumber'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input>
+                <!-- <app-text-input [fieldName]="'shippingAgentCode'" [label]="'amendBL.shippingAgentCode'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input> -->
+                <!-- <app-text-input [fieldName]="'bolType'" [label]="'amendBL.bolType'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input> -->
+                <app-select [fieldName]="'bolType'" [label]="'amendBL.bolType'" [items]="bolTypeItems" [parentForm]="form" [fb]="formBuilder">
+                </app-select>
+                <app-date-input [fieldName]="'vesselAta'" [label]="'amendBL.vesselAta'" [parentForm]="form" [fb]="formBuilder">
+                </app-date-input>
+            </div>
+            <div class="col-sm">
+                <!-- <app-text-input [fieldName]="'shippingAgentName'" [label]="'amendBL.shippingAgentName'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input> -->
+                <static-field [value]="bol.bolDetails.shippingAgentName" [label]="'amendBL.shippingAgentName'"></static-field>
+                <br>
+                <app-text-input [fieldName]="'vesselName'" [label]="'amendBL.vesselName'" [parentForm]="form" [prefixIcon]="'directions_boat'" [fb]="formBuilder">
+                </app-text-input>
+                <app-text-input [fieldName]="'containerCount'" [numbersOnly]="true" [label]="'amendBL.containerCount'" [parentForm]="form" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+        </div>
+    </collapse-panel>
+
+    <collapse-panel [panelCount]="3" [panelText]="'BOL Invoice'" [showPanelIcon]="false" [expanded]="true">
+        <div class="row row-margin">
+            <div class="col-sm">
+                <app-normal-table [tableDefn]="tableDfn" [tableDS]="tableItems" (clickEvent)="tableAction($event)" [edit]="true" [delete]="true" [view]='true' #invoiceTable></app-normal-table>
+            </div>
+        </div>
+    </collapse-panel>
+    <collapse-panel [panelCount]="3" [panelText]="'Add/Edit BOL Invoice'" formGroupName="bolInvoices" [showPanelIcon]="false" [expanded]="true" [hidden]="!showInvPanel">
+        <!-- <div [formGroupName]="invoiceIndex"> -->
+        <div class="row row-margin">
+            <div class="col-sm">
+                <div *ngIf="!invoiceNoFlag">
+                    <app-text-input [parentForm]="form.get('bolInvoices')" [label]="'amendBL.invoiceNo'" [placeHolder]="'Invoice Number'" [fieldName]="'invoiceNumber'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" (outputEvent)="checkInvoiceNo()">
+                    </app-text-input>
+                </div>
+                <div *ngIf="invoiceNoFlag">
+                    <static-field [label]="'amendBL.invoiceNo'" [value]="form.get('bolInvoices').get('invoiceNumber').value">
+                    </static-field>
+
+                </div>
+            </div>
+            <div class="col-sm">
+                <app-date-input [parentForm]="form.get('bolInvoices')" [fieldName]="'invoiceValidityDate'" [label]="'amendBL.invoiceValidityDate'" [fb]="formBuilder" [minDate]="minDate">
+                </app-date-input>
+            </div>
+            <div class="col-sm">
+                <app-select [parentForm]="form.get('bolInvoices')" [fieldName]="'invoiceType'" [label]="'Select Invoice Type'" [items]="invItems" [fb]="formBuilder" [multiple]="'false'" (outputEvent)="checkInvType($event)">
+                </app-select>
+            </div>
+
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <!-- <app-text-input [fieldName]="'currency'" [label]="'amendBL.currency'" [parentForm]="form.get('bolInvoices')" [fb]="formBuilder">
+                </app-text-input> -->
+                <app-select [parentForm]="form.get('bolInvoices')" [fieldName]="'currency'" [label]="'Select Currency'" [items]="currencyTypes" [fb]="formBuilder" [multiple]="'false'" (outputEvent)="checkInvCurreny($event)">
+                </app-select>
+            </div>
+            <div class="col-sm">
+
+                <app-text-input [fieldName]="'invoiceValue'" [validations]="amountValidation" [label]="'amendBL.invoiceValue'" [parentForm]="form.get('bolInvoices')" [fb]="formBuilder">
+                </app-text-input>
+            </div>
+            <div class="col-sm">
+                <app-date-input [fieldName]="'invoiceDate'" [label]="'amendBL.invoiceDate'" [parentForm]="form.get('bolInvoices')" [fb]="formBuilder">
+                </app-date-input>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm">
+                <p>
+                    <span style="color:red"> Note: Upload Document only of File Type (PDF) and maximum file size 1 MB </span>
+                </p>
+
+                <fileupload [parentForm]="form.get('bolInvoices')" [label]="'Upload Invoice'" [maxFileSizeMb]="5" [allowedFileTypes]="['pdf']" [placeHolder]="'Upload Invoice'" [defaultFileId]="form.get('bolInvoices').get('encrInvoiceNumber').value" [fieldName]="'path'"
+                    [fb]="formBuilder" (dataEmitter)="fileUpload($event)" [dndType]="'true'" [defaultLoaded]="'pathFlag'" [defaultFileName]="'Invoice'"></fileupload>
+            </div>
+        </div>
+        <div class="row row-margin">
+            <div class="col-sm button-holder">
+                <app-button [buttonType]="'button'" [icon]="'cancel'" [buttonName]="'CANCEL'" (clickEvent)="onClear($event)">
+                </app-button>
+                <app-button [buttonType]="'button'" [icon]="'add_circle'" [buttonName]="'SAVE'" (clickEvent)="addTable($event)">
+                </app-button>
+
+            </div>
+            <!-- </div> -->
+        </div>
+    </collapse-panel>
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+
+            <app-button [buttonType]="'Submit'" [buttonName]="'Amend'" [icon]="'edit'" (clickEvent)="amendBL($event)">
+            </app-button>
+            <app-button [buttonType]="'Submit'" [buttonName]="'Delete BOL'" [icon]="'delete_sweep'" (clickEvent)="deleteBL($event)">
+            </app-button>
+
+            <app-button [buttonType]="'button'" [buttonName]="'Add Invoice'" [icon]="'add_box'" (clickEvent)="addInvoice()">
+            </app-button>
+
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+            <app-button [buttonType]="'button'" [buttonName]="'Back'" (clickEvent)="close()" [icon]="'arrow_back'">
+            </app-button>
+        </div>
+    </div>
+</form>

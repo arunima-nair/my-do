@@ -1,0 +1,18 @@
+<app-dialog (clickEvent)="clicked($event)" [ok]="'true'" [cancel]="'true'" [title]="'Upload DO'">
+
+    <div [formGroup]="form">
+        <div class="row row-margin" style="font-weight:bold;color:red;" *ngIf="checkOBL">
+
+            <!--app-check-box [parentForm]="form" [fb]="formBuilder" *ngIf="bolType==='ORIGINAL'||bolType=='OBL'" [fieldName]="'oblCopy'" [label]="'Physical copy of OBL  received.*'">
+            </app-check-box-->
+            <app-radio [parentForm]=" form" [fb]="formBuilder" [fieldName]="'oblCopy'" [isColon]="false" *ngIf="bolType==='OBL'" [options]="[{label:'Physical copy of OBL  received',value:1},
+             {label:'Converted to EBL',value:2}]">
+            </app-radio>
+        </div>
+        <div class="row row-margin">
+            <fileupload [parentForm]="form" [label]="'Upload DO *'" [maxFileSizeMb]="fileSize" [placeHolder]="'Upload DO'" [fieldName]="'uploadDo'" [fb]="formBuilder" [maxFileSizeMb]="0.5" [allowedFileTypes]="['pdf','jpeg','png']" (dataEmitter)="Upload($event)" [dndType]="'true'">
+            </fileupload>
+
+        </div>
+    </div>
+</app-dialog>

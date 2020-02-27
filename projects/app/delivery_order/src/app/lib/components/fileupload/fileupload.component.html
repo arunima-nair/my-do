@@ -1,0 +1,55 @@
+<div [formGroup]="parentForm">
+    <div class="file-upload" *ngIf="dndType">
+        <ng-container *ngIf="labelPos ==='T'">
+            <mat-label>{{labelTxt}}</mat-label>
+        </ng-container>
+
+        <div (drop)="drop($event)" class="drop-area" (dragover)="dragOver($event)" (dragleave)="dragLeave()" (click)="fileInput.click()" *ngIf="!defaultLoaded">
+            <div class="dnd-area" [ngClass]="dngclass">
+                <input type="file" id="fileElem" #fileInput (change)="onFilesAdded($event)" hidden />
+                <div class="dnd-area-section">
+                    <mat-icon *ngIf="!fileLoaded">description</mat-icon>
+                    <p *ngIf="!fileLoaded">Drag & Drop</p>
+                    <p *ngIf="!fileLoaded"> Files Here</p>
+                    <p *ngIf="!fileLoaded" style="color:red">or</p>
+                    <p *ngIf="!fileLoaded">
+                        <span class="upload-browse">Browse Files</span>
+                    </p>
+                    <div *ngIf="fileLoaded" class="fileLoaded" matTooltip="{{fileName}}">
+                        {{fileName}}
+                        <mat-icon *ngIf="fileLoaded" class="del-icon no-border" (click)="clearUpload($event)">remove_circle_outline
+                        </mat-icon>
+                    </div>
+                </div>
+            </div>
+            <ng-container *ngFor="let validation of validations;" ngProjectAs="mat-error">
+                <mat-error *ngIf="parentForm.get(fieldName).hasError(validation.name) &&
+                        !filesAdded">
+                    {{validation.message}}
+                </mat-error>
+            </ng-container>
+        </div>
+        <div *ngIf="defaultLoaded" class="drop-area">
+            <div class="dnd-area">
+                <div class="dnd-area-section">
+                    <div class="fileLoaded">
+                        <div (click)="downLoadFile($event)" matTooltip="{{defaultFileName}}">
+                            {{defaultFileName}}
+                            <mat-icon *ngIf="fileLoaded" class="del-icon no-border" (click)="clearUpload($event)">
+                                remove_circle_outline</mat-icon>
+                        </div>
+                        <div>
+                            <mat-icon>get_app</mat-icon>
+                        </div>
+                    </div>
+                    <!-- <div>
+            <mat-icon matTooltip="Delete" *ngIf="fileLoaded" class="del-icon no-border" (click)="clearUpload($event)">delete</mat-icon>
+          </div> -->
+                </div>
+            </div>
+        </div>
+        <ng-container *ngIf="labelPos ==='B'">
+            <mat-label>{{labelTxt}}</mat-label>
+        </ng-container>
+
+    </div>

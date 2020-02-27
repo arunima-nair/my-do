@@ -1,0 +1,7 @@
+.top-container {
+    margin-bottom: 20px !important;
+  }
+  
+  section .container .top-container {
+      padding-bottom: 25px;
+  }

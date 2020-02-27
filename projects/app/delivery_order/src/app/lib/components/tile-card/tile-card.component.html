@@ -1,0 +1,32 @@
+<!-- <mat-card [ngClass]="'tile-card'">
+    <mat-card-content [ngClass]="'tile-card-content'">
+      <div class="tile-card-icon">
+        <mat-icon>assignment</mat-icon>
+      </div>
+         <div class="tile-card-content-data"> 
+            <mat-icon>assignment</mat-icon>
+            <p>Book Food Import Request</p>
+        </div>
+    </mat-card-content>
+</mat-card> -->
+
+<!-- <div class="tile-card">
+  <div class="tile-card-content">
+      <div class="tile-card-icon">
+         <div class="card-icon"> 
+           <mat-icon>assignment</mat-icon> 
+          </div>
+         <div class="card-icon-text">  
+            <p> Hello</p> 
+          </div>
+        </div>
+  </div>
+</div> -->
+<a [routerLink]="link">
+<div class="tile-card">
+    <span>
+      <p class="tile-mat-icon"><mat-icon>{{icon}}</mat-icon> </p>
+      <p class="tile-txt">{{description}} </p>
+ </span>
+</div>
+</a>

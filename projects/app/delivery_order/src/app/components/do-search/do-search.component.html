@@ -1,0 +1,46 @@
+<form [formGroup]="myForm">
+
+    <div class="row row-margin">
+
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.bolNo'" [placeHolder]="'BOL Number'" [fieldName]="'bol'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <app-text-input [parentForm]="myForm" [label]="'Dosearch.refNo'" [placeHolder]="'DO Reference Number'" [fieldName]="'doRefNo'" [fieldType]="'text'" [validations]="" [fb]="formBuilder"></app-text-input>
+
+        </div>
+        <div class="col-sm">
+            <app-select [fieldName]="'status'" [label]="'Dosearch.status'" [items]="statusItems" [parentForm]="myForm" [fb]="formBuilder">
+            </app-select>
+        </div>
+    </div>
+    <div class="row row-margin">
+
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.frmDate'" [placeHolder]="'From Date'" [fieldName]="'frmDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" [maxDate]="maxDate" (clickEvent)="onChange()"></app-date-input>
+        </div>
+        <div class="col-sm">
+            <app-date-input [parentForm]="myForm" [label]="'Dosearch.toDate'" [placeHolder]="'To Date'" [fieldName]="'toDate'" [fieldType]="'text'" [validations]="" [fb]="formBuilder" [maxDate]="maxDate" [minDate]="minDate">
+            </app-date-input>
+        </div>
+    </div>
+
+    <div class="row row-margin">
+        <div class="col-sm button-holder">
+            <app-button [buttonType]="'Submit'" [buttonName]="'Search'" (clickEvent)="reloadDataTable($event)" [icon]="'search'">
+            </app-button>
+            <app-button [buttonName]="'Reset'" [icon]="'refresh'" (clickEvent)="reset($event)"></app-button>
+
+        </div>
+    </div>
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-data-table [url]="'/do/app/api/secure/searchDO'" [tableDefn]="tableDfn" (clickEvent)="editDO($event)" [pageSize]="10" #dataTable>
+            </app-data-table>
+        </div>
+
+    </div>
+
+
+</form>

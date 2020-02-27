@@ -1,0 +1,8 @@
+<app-dialog [title]="'Monitor File Upload'" [ok]="false" [cancel]="false" (clickEvent)="close($event)" [actionButtons]="false">
+    <div class="row row-margin">
+        <div class="col-sm">
+            <app-button [buttonType]="'button'" [buttonName]="'Download File'" [icon]="'list_alt'" (clickEvent)="downloadRecipt('recipt')" class="fa-pull-left"></app-button>
+            <app-button [buttonType]="'button'" [buttonName]="'File Log Details'" [icon]="'grid_on'" (clickEvent)="downloadFile('file')" class="fa-pull-right"></app-button>
+        </div>
+    </div>​
+</app-dialog>

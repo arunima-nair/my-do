@@ -1,0 +1,19 @@
+Issue Type,Issue key,Summary,Assignee,Reporter,Priority,Status,Resolution,Notes
+Improvement,DO2-260,DTUM Admin needs to access DO service,Kamala.Devi,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Improvement,DO2-259,If the BL is “returned” the remarks doesn’t indicate in the report though its updated in Dubai Trade. ,ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Improvement,DO2-258,"Presently report indicates only the creation date, need to include DO requested date and released date along with of creation date and the same should also indicate in the “track delivery order” screen. ",ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Improvement,DO2-257,Report should indicate the user details who has issued the DO. ,ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Improvement,DO2-255,"If the BL’s are not available while searching, pop-up msg to be shown i.e. manifest will be available 3 days prior vessel arrival. ",ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED ( This Will enable only oneuser  SA for testing In SIT we added for A180-MAERSK KANOO UAE LLC)
+Improvement,DO2-254,Presently customer is searching the BL with “ONEY” prefix.,ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED ( This Will enable only oneuser  SA for testing In SIT we added for A180-MAERSK KANOO UAE LLC)
+Improvement,DO2-240,Mail Content Changes ,Kamala.Devi,Khawla.AlKooheji,Low,DEV Completed,,Dev Completed
+Improvement,DO2-237,Low Priority: Proof of Payment,Kamala.Devi,Khawla.AlKooheji,Low,DEV Completed,,RESOLVED
+Improvement,DO2-225,BL Party & DO Party codes should be available in the report,ParamInfo.Arunima,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Improvement,DO2-224,"Report: Importer Code/Importer Name to be changed, as the requester can be clearing Agent",ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,RESOLVED
+Bug,DO2-221,All the Amendment and Rejection remarks entries to be sorted correctly,ParamInfo.Arunima,amar.pradeep,Medium,DEV Completed,Fixed,Available Pahse 2 build not current build 
+Bug,DO2-220,Return remarks displayed to the importer should display the latest remarks,ParamInfo.Arunima,amar.pradeep,Medium,DEV Completed,,Available Pahse 2 build not current build 
+Bug,DO2-218,Request DO Email notification to Shipping Agent should be sent only after payment is completed,ParamInfo.Arunima,amar.pradeep,Medium,DEV Completed,,Available Pahse 2 build not current build 
+Bug,DO2-215,Request DO -  Mobile number field is not clearing when reseting the page. ,ParamInfo.Arunima,Khawla.AlKooheji,Medium,DEV Completed,,Available Pahse 2 build not current build 
+Bug,DO2-214,Track DO- approval history should be displayed in order ,ParamInfo.Arunima,Khawla.AlKooheji,Medium,DEV Completed,,Available Pahse 2 build not current build 
+Bug,DO2-210,"Upload BOL - If we try to upload BOL and Invoice one after the other, error message is displayed while trying to upload Invoice",Kamala.Devi,amar.pradeep,Medium,DEV Completed,,RESOLVED
+Bug,DO2-105,Monitor File Uploads - option should be provided for amending ,ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,Not Available this build
+Bug,DO2-202,Request DO - Mobile number field is not properly functioning,ajvibik,Khawla.AlKooheji,Medium,DEV Completed,,Dupliacte Issue

@@ -1,0 +1,24 @@
+<!-- <div class="confirm-page">
+    <div class="confirm-header-icon">
+        <i class="fa-icon fal fa-clipboard-check"></i>
+    </div>
+    <div class="confirm-header-text">
+     <h2> {{header_txt}} </h2>
+    </div>
+    <div class="confirm-body">
+       <ng-content></ng-content>
+    </div>
+ </div> -->
+<div class="confirm-page">
+    <mat-icon [ngClass]="getStyle()">{{getIcon()}}</mat-icon>
+    <mat-card [ngClass]="'container'">
+        <div class="confirm-head">
+            <p class="{{getHeaderStyle()}} multi_lines_text">{{header_txt}}</p>
+        </div>
+        <mat-card-content>
+            <div class="confirm-content">
+                <ng-content></ng-content>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>
